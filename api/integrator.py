@@ -14,6 +14,7 @@
 # *: do not tell other MS about this (the change will not affect them)
 # It is essential that each MS, including partitions, has its own distinct IP address
 
+import os
 import sys
 import datetime
 import pprint
@@ -114,9 +115,33 @@ def writeToLog(message):
 	with open("log.txt", "a") as myfile:
 		myfile.write(message + "\n")
 
-#TODO: write a deleteFromLog function
 def deleteFromLog(timestamp):
-	print "Delete from log"
+	# Read all the lines
+	f = open("log.txt", "r")
+	lines = f.readlines()
+	f.close()
+
+	# Look for the line to delete
+	lineNumber = 1
+	for l in lines:
+		if timestamp in l:
+			break
+		lineNumber += 1
+
+	# Write all lines except for the one to delete into a new file
+	lineCount = 1
+	message = ""
+	n = open("newlog.txt", "a")
+	for line in lines:
+		if lineCount != lineNumber:
+			n.write(line)
+		else:
+			message += line
+		lineCount += 1
+
+	# Rename the new file
+	os.rename("newlog.txt", "log.txt")
+	return message
 
 # Method to help split the key and prepare it in the correct format for the log
 def formatKey(key):
@@ -237,9 +262,16 @@ def post_2key(pkey, fkey, action):
 
 # POST message from MS telling integrator to delete a log message with a certain timestamp
 # TODO: problem, what do we do with the non-essential logs? the ones that don't affect the other DB
-
+@app.route('/integrator/<timestamp>', methods = ['POST'])
+def delete_logEntry(timestamp):
+	ip = request.remote_addr #save requester's IP address
+	message = deleteFromLog(timestamp)
+	if (len(message) > 0):
+		data = {'deleted':message}
+		return response(data, 200)
+	else:
+		data = {'error':'Message does not exist'}
+		return response(data, 404)
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
-
-#python integrator.py courses course123 2 students students111 students2 students222
