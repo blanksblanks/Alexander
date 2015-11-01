@@ -111,8 +111,12 @@ def response(data, code):
 # Ex.6 Student with UNI=wvb2103 dropped COMS4111-2
 #	2015-11-01T16:46:23.380283 127.0.0.1 [wvb2103] [COMS4111-2] [] [] DELETE
 def writeToLog(message):
-	print "Written to log"
-	#TODO: actually write to the log!
+	with open("log.txt", "a") as myfile:
+		myfile.write(message + "\n")
+
+#TODO: write a deleteFromLog function
+def deleteFromLog(timestamp):
+	print "Delete from log"
 
 # Method to help split the key and prepare it in the correct format for the log
 def formatKey(key):
@@ -230,6 +234,10 @@ def post_2key(pkey, fkey, action):
 	# Return the logged message to the requester
 	data = {'logged':message}
 	return response(data, 200)
+
+# POST message from MS telling integrator to delete a log message with a certain timestamp
+# TODO: problem, what do we do with the non-essential logs? the ones that don't affect the other DB
+
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
