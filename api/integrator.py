@@ -60,28 +60,19 @@ def checkIP(ip_address):
 @app.route('/integrator', methods = ['GET', 'POST'])
 def integrator():
 	if request.method == 'POST':
-		print "POST"
 		ip = request.remote_addr #save requester's IP address
-		print "REQUEST IP: " + str(ip)
-		#return "Hello World\n"
-		print str(ip) + " " + str(coursesIP)
 		if (checkIP(ip)):
 			return "POST request from " + str(ip) + "\n"
 		else:
-			return "Unsupported requester IP address"
+			return "Unsupported requester IP address."
 	elif request.method == 'GET':
-		print "GET"
 		ip = request.remote_addr
-		print "REQUEST IP: " + str(ip)
-		return "Hello World\n"
-		"""
 		if (checkIP(ip)):
-			print "GET request from " + str(ip)
+			return "GET request from " + str(ip) + "\n"
 		else:
-			print "Unsupported requester IP address"
-		"""
+			return "Unsupported requester IP address."
 	else:
-		print "Unsupported method"
+		print "Unsupported protocol."
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
