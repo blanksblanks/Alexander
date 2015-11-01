@@ -54,7 +54,16 @@ def checkIP(ip_address):
 			return True
 	return False	
 
-@app.route('/integrator', methods = ['GET', 'POST'])
+def writeToLog():
+	print "Written to log"
+
+@app.route('/integrator/<message>', methods = ['POST'])
+def log_message(message):
+	return jsonify({'ip': request.remote_addr}), 200
+
+# Do NOT delete this! We will need parts of this later
+"""
+@app.route('/integrator/', methods = ['GET', 'POST'])
 def integrator():
 	if request.method == 'POST':
 		ip = request.remote_addr #save requester's IP address
@@ -68,6 +77,7 @@ def integrator():
 			return "GET request from " + str(ip) + "\n"
 		else:
 			return "Unknown requester IP address.\n"
+"""
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
