@@ -38,9 +38,7 @@ def main(argv):
 	global students
 	for i in range(numberOfPartitions):
 		students[argv[argNumber]] = argv[argNumber+1]
-		print "adding: " + argv[argNumber+1] + " to " + argv[argNumber]
 		argNumber += 2
-	print students
 
 	app.run( # curl -X POST/GET http://0.0.0.0:9000/integrator from another terminal window to send requests
 		host = "127.0.0.1",
@@ -51,7 +49,6 @@ def main(argv):
 def checkIP(ip_address):
 	if (IPAddress(ip_address) == IPAddress(coursesIP)):
 		return True
-	print students
 	for k, v in students.iteritems():
 		if IPAddress(ip_address) == IPAddress(v):
 			return True
@@ -64,15 +61,13 @@ def integrator():
 		if (checkIP(ip)):
 			return "POST request from " + str(ip) + "\n"
 		else:
-			return "Unsupported requester IP address."
+			return "Unknown requester IP address."
 	elif request.method == 'GET':
 		ip = request.remote_addr
 		if (checkIP(ip)):
 			return "GET request from " + str(ip) + "\n"
 		else:
-			return "Unsupported requester IP address."
-	else:
-		print "Unsupported protocol."
+			return "Unknown requester IP address.\n"
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
