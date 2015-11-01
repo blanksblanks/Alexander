@@ -1,6 +1,7 @@
 import sys
 import datetime
 import pprint
+from netaddr import *
 
 from bson.json_util import dumps
 
@@ -24,46 +25,61 @@ def main(argv):
 	if (len(argv) < 5):
 		print "Too few command-line arguments."
 		sys.exit(1)
+
+	global courses
 	courses = argv[0]
+
+	global coursesIP
 	coursesIP = argv[1]
+
 	numberOfPartitions = int(argv[2])
 	argNumber = 3
+
+	global students
 	for i in range(numberOfPartitions):
 		students[argv[argNumber]] = argv[argNumber+1]
+		print "adding: " + argv[argNumber+1] + " to " + argv[argNumber]
 		argNumber += 2
+	print students
 
 	app.run( # curl -X POST/GET http://0.0.0.0:9000/integrator from another terminal window to send requests
-		host = "localhost",
+		host = "127.0.0.1",
 		port = int("9001")
 	)
 
 # Check that the requester's IP address belongs to courses or one of the students micro-services
 def checkIP(ip_address):
-	print "CHECK: " + coursesIP + " " + ip_address
-	if (ip_address == coursesIP):
-		print "COURSES"
+	if (IPAddress(ip_address) == IPAddress(coursesIP)):
 		return True
-	elif (ip_address in students.values()):
-		print "STUDENT"
-		return True
-	else:
-		return False	
+	print students
+	for k, v in students.iteritems():
+		if IPAddress(ip_address) == IPAddress(v):
+			return True
+	return False	
 
 @app.route('/integrator', methods = ['GET', 'POST'])
 def integrator():
 	if request.method == 'POST':
+		print "POST"
 		ip = request.remote_addr #save requester's IP address
-		if (ip_address == coursesIP or ip_address in students.values()):
-			return "POST request from " + str(ip)
+		print "REQUEST IP: " + str(ip)
+		#return "Hello World\n"
+		print str(ip) + " " + str(coursesIP)
+		if (checkIP(ip)):
+			return "POST request from " + str(ip) + "\n"
 		else:
 			return "Unsupported requester IP address"
 	elif request.method == 'GET':
 		print "GET"
 		ip = request.remote_addr
+		print "REQUEST IP: " + str(ip)
+		return "Hello World\n"
+		"""
 		if (checkIP(ip)):
 			print "GET request from " + str(ip)
 		else:
 			print "Unsupported requester IP address"
+		"""
 	else:
 		print "Unsupported method"
 
