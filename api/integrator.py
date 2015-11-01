@@ -43,11 +43,16 @@ def main(argv):
 		print "Too few command-line arguments."
 		sys.exit(1)
 
+	ips = []
+	expectedUniqueIPs = 0
+
 	global courses
 	courses = argv[0]
 
 	global coursesIP
 	coursesIP = argv[1]
+	ips.append(coursesIP)
+	expectedUniqueIPs += 1
 
 	numberOfPartitions = int(argv[2])
 	argNumber = 3
@@ -55,9 +60,14 @@ def main(argv):
 	global students
 	for i in range(numberOfPartitions):
 		students[argv[argNumber]] = argv[argNumber+1]
+		ips.append(argv[argNumber+1])
 		argNumber += 2
+		expectedUniqueIPs += 1
 
-	#TODO: ensure that the IP addresses are all distinct!
+	# ensure that the IP addresses are all distinct!
+	if (len(set(ips)) < expectedUniqueIPs):
+		print "Each IP address must be distinct (including partitions)."
+		sys.exit(1)
 
 	app.run(
 		host = "127.0.0.1",
@@ -96,8 +106,13 @@ def response(data, code):
 #	2015-11-01T16:06:20.702367 127.0.0.1 [mlh2197] [] [Melanie Hsu] [Princess Sally] PUT
 # Ex.4 Student with uni=mlh2197 dropped biology lab (BIOLS2501)
 #	2015-11-01T16:09:40.726156 127.0.0.1 [mlh2197] [] [BIOLS2501] [None] DELETE
+# Ex.5 Student with UNI=wvb2103 added COMS4111-1
+#	2015-11-01T16:45:59.339502 127.0.0.1 [wvb2103] [COMS4111-1] [] [] POST
+# Ex.6 Student with UNI=wvb2103 dropped COMS4111-2
+#	2015-11-01T16:46:23.380283 127.0.0.1 [wvb2103] [COMS4111-2] [] [] DELETE
 def writeToLog(message):
 	print "Written to log"
+	#TODO: actually write to the log!
 
 # Method to help split the key and prepare it in the correct format for the log
 def formatKey(key):
@@ -147,10 +162,10 @@ def post_key_POST_OR_DEL(primary_key, action):
 # The integrator will NOT inform the other MS about these changes
 # POST with non-primary key, requester can specify any of the four operations
 # To call: curl -X POST http://127.0.0.1:9001/integrator/<old_keys_vals_separated_by_underlines>/<new_key_vals_separated_by_underlines>/<CRUD op>
-# Ex. curl -X POST http://127.0.0.1:9001/integrator/mlh2197/Melanie_Hsu/Princess_Sally/PUT
+# Ex.1 curl -X POST http://127.0.0.1:9001/integrator/mlh2197/Melanie_Hsu/Princess_Sally/PUT
 # where Melanie Hsu (UNI: mlh2197) changed her name to Princess Sally
 # Ex.2 curl -X POST http://127.0.0.1:9001/integrator/mlh2197/BIOLS2501/None/DELETE
-# where Melanie Hsu (UNI: mlh2197) dropped Biology Lab
+# where student with UNI mlh2197 dropped Biology Lab
 @app.route('/integrator/<primary_key>/<key_oldval>/<key_newval>/<action>', methods = ['POST'])
 def post_key_PUT(primary_key, key_oldval, key_newval, action):
 	ip = request.remote_addr #save requester's IP address
@@ -178,8 +193,10 @@ def post_key_PUT(primary_key, key_oldval, key_newval, action):
 	return response(data, 200)
 
 # POST with primary & foreign key
-# Supports POST & DELETE but not PUT
-# student leaves a class, student adds a class
+# Ex.1 curl -X POST http://127.0.0.1:9001/integrator/wvb2103/COMS4111-1/POST
+# where student with UNI=wvb2103 added COMS4111-1
+# Ex.2 curl -X POST http://127.0.0.1:9001/integrator/wvb2103/COMS4111-2/DELETE
+# where student with UNI=wvb2103 dropped COMS4111-2
 @app.route('/integrator/<pkey>/<fkey>/<action>', methods = ['POST'])
 def post_2key(pkey, fkey, action):
 	ip = request.remote_addr #save requester's IP address
