@@ -18,7 +18,7 @@ app = Flask(__name__)
 
 courses = None
 coursesIP = None
-students = {}
+students = {} # dictionary of studentsURL: studentsIP
 
 def main(argv):
 	if (len(argv) < 5):
@@ -32,17 +32,40 @@ def main(argv):
 		students[argv[argNumber]] = argv[argNumber+1]
 		argNumber += 2
 
-	app.run(
+	app.run( # curl -X POST/GET http://0.0.0.0:9000/integrator from another terminal window to send requests
 		host = "localhost",
-		port = int("9000")
+		port = int("9001")
 	)
+
+# Check that the requester's IP address belongs to courses or one of the students micro-services
+def checkIP(ip_address):
+	print "CHECK: " + coursesIP + " " + ip_address
+	if (ip_address == coursesIP):
+		print "COURSES"
+		return True
+	elif (ip_address in students.values()):
+		print "STUDENT"
+		return True
+	else:
+		return False	
 
 @app.route('/integrator', methods = ['GET', 'POST'])
 def integrator():
 	if request.method == 'POST':
-		print "POST"
-	else:
+		ip = request.remote_addr #save requester's IP address
+		if (ip_address == coursesIP or ip_address in students.values()):
+			return "POST request from " + str(ip)
+		else:
+			return "Unsupported requester IP address"
+	elif request.method == 'GET':
 		print "GET"
+		ip = request.remote_addr
+		if (checkIP(ip)):
+			print "GET request from " + str(ip)
+		else:
+			print "Unsupported requester IP address"
+	else:
+		print "Unsupported method"
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
