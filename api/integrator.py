@@ -20,6 +20,7 @@ app = Flask(__name__)
 courses = None
 coursesIP = None
 students = {} # dictionary of studentsURL: studentsIP
+acceptedOps = ['POST', 'GET', 'PUT', 'DELETE']
 
 def main(argv):
 	if (len(argv) < 5):
@@ -54,15 +55,54 @@ def checkIP(ip_address):
 			return True
 	return False	
 
+# Check that the requester's action is one of the CRUD operations
+def checkAction(action):
+	if (action in acceptedOps):
+		return True
+	else:
+		return False
+
 def writeToLog():
 	print "Written to log"
 
-@app.route('/integrator/<message>', methods = ['POST'])
-def log_message(message):
-	return jsonify({'ip': request.remote_addr}), 200
+# Cases where courses will call integrator:
+# 	A course has been canceled
+#
+# Cases where students will call integrator:
+#	Student adds a class
+#	Student deletes a class
+#	Student leaves the university
+#	Student changes their name (must provide both first and last name)
+
+# POST with primary key only
+@app.route('/integrator/<pkey>/<action>', methods = ['POST'])
+def post_pkey(pkey, action):
+	ip = request.remote_addr #save requester's IP address
+	if (checkIP(ip)):
+		if (not checkAction(action)):
+			return "Bad protocol"
+	else:
+		return "Unknown requester IP address."
+	print pkey
+	print action
+	return "Hello Post!"
+
+# POST with primary & foreign key
+@app.route('/integrator/<pkey>/<fkey>/<action>', methods = ['POST'])
+def post_2key(pkey, fkey, action):
+	print pkey
+	print fkey 
+	print action
+	return "Hello World!"
+
+
+# Action being taken
+# What operation it is
+# Each micro service needs a different IP
+
+# integrator do post operations?*
 
 # Do NOT delete this! We will need parts of this later
-"""
 @app.route('/integrator/', methods = ['GET', 'POST'])
 def integrator():
 	if request.method == 'POST':
@@ -77,7 +117,6 @@ def integrator():
 			return "GET request from " + str(ip) + "\n"
 		else:
 			return "Unknown requester IP address.\n"
-"""
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
