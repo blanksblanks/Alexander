@@ -140,7 +140,8 @@ def deleteFromLog(timestamp):
 		lineCount += 1
 
 	# Rename the new file
-	os.rename("newlog.txt", "log.txt")
+	if (len(message) > 0):
+		os.rename("newlog.txt", "log.txt")
 	return message
 
 # Method to help split the key and prepare it in the correct format for the log
@@ -180,9 +181,9 @@ def post_key_POST_OR_DEL(primary_key, action):
 	if (action != 'PUT' and action != 'GET'): 
 		print "TELL OTHER MS"
 
-	# TODO: inform the other MS(s) of this change, perhaps in a separate thread that continuously checks for responses?
+	# TODO: inform the other MS(s) of this change by sending message to it, perhaps in a separate thread that continuously checks for responses?
 	# Not entirely sure how to do this, since making a separate thread == waiting around, which is undesirable
-	# The other MS will respond with the timestamp of the log entry that needs to be deleted
+	# The other MS will call /integrator/<timestamp> - the deletion is already handled
 
 	# Return the logged message to the requester
 	data = {'logged':message}
@@ -252,9 +253,9 @@ def post_2key(pkey, fkey, action):
 	if (action != 'PUT' and action != 'GET'): 
 		print "TELL OTHER MS"
 
-	# TODO: inform the other MS(s) of this change, perhaps in a separate thread that continuously checks for responses?
+	# TODO: inform the other MS(s) of this change by sending message to it, perhaps in a separate thread that continuously checks for responses?
 	# Not entirely sure how to do this, since making a separate thread == waiting around, which is undesirable
-	# The other MS will respond with the timestamp of the log entry that needs to be deleted
+	# The other MS will call /integrator/<timestamp> - the deletion is already handled
 
 	# Return the logged message to the requester
 	data = {'logged':message}
