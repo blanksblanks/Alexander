@@ -62,7 +62,13 @@ def checkAction(action):
 	else:
 		return False
 
-def writeToLog():
+# Creates response to return to the user
+def response(data, code):
+	js = json.dumps(data)
+	resp = Response(js, status = code, mimetype='application/json')
+	return resp
+
+def writeToLog(message):
 	print "Written to log"
 
 # Cases where courses will call integrator:
@@ -75,17 +81,21 @@ def writeToLog():
 #	Student changes their name (must provide both first and last name)
 
 # POST with primary key only
+# To call: curl -X POST http://127.0.0.1:9001/integrator/<pkeys_separated_by_underlines>/<CRUD op>
+# Ex: curl -X POST http://127.0.0.1:9001/integrator/Steve_Jobs/DELETE where Steve Jobs leaves uni
+#	  curl -X POST http://127.0.0.1:9001/integrator/COMS4111-3/DELETE where COMS4111-3 is cancelled
 @app.route('/integrator/<pkey>/<action>', methods = ['POST'])
 def post_pkey(pkey, action):
 	ip = request.remote_addr #save requester's IP address
 	if (checkIP(ip)):
-		if (not checkAction(action)):
-			return "Bad protocol"
+		if (not checkAction(action)): #make sure requester specified a CRUD operation
+			data = {'error':'Specified protocol not a CRUD operation'}
+			return response(data, 403)
 	else:
-		return "Unknown requester IP address."
-	print pkey
-	print action
-	return "Hello Post!"
+		data = {'error':'Unknown requester IP address'}
+		return response(data, 403)
+	
+
 
 # POST with primary & foreign key
 @app.route('/integrator/<pkey>/<fkey>/<action>', methods = ['POST'])
