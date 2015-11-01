@@ -1,3 +1,19 @@
+# The integrator micro-service
+# It logs every transaction but will not always inform the other MS about the changes
+
+# Cases where courses will call integrator:
+# 	A course has been canceled
+#
+# Cases where students will call integrator:
+#	Student adds a class
+#	Student deletes a class
+#	Student leaves the university (dropping all classes)
+#	Student changes their name (must provide both first and last name)*
+#	Student updates past courses*
+
+# *: do not tell other MS about this (the change will not affect them)
+# It is essential that each MS, including partitions, has its own distinct IP address
+
 import sys
 import datetime
 import pprint
@@ -41,7 +57,9 @@ def main(argv):
 		students[argv[argNumber]] = argv[argNumber+1]
 		argNumber += 2
 
-	app.run( # curl -X POST/GET http://0.0.0.0:9000/integrator from another terminal window to send requests
+	#TODO: ensure that the IP addresses are all distinct!
+
+	app.run(
 		host = "127.0.0.1",
 		port = int("9001")
 	)
@@ -68,31 +86,73 @@ def response(data, code):
 	resp = Response(js, status = code, mimetype='application/json')
 	return resp
 
-# Log message format: <timestamp> <requester IP> [<pkeys>] [<fkeys> IF EXISTS] <CRUD operation>
-# Ex. Steve Jobs leaves UNI: 
-#	2015-11-01T15:26:22.729117 127.0.0.1 [Steve Jobs] DELETE
-# Ex. COMS4111-3 is cancelled
-#	2015-11-01T15:27:21.546925 127.0.0.1 [COMS4111-3] DELETE
+# Log message format: <timestamp> <requester IP> [<pkeys>] [<fkeys>] [<original non-primary key>] [<changed non-primary key>] <CRUD operation>
+# Leave any given array as empty parentheses if there aren't any
+# Ex.1 Steve Jobs leaves UNI: 
+#	2015-11-01T16:19:03.336866 127.0.0.1 [Steve Jobs] [] [] [] DELETE
+# Ex.2 COMS4111-3 is cancelled
+#	2015-11-01T16:19:43.202877 127.0.0.1 [COMS4111-3] [] [] [] DELETE
+# Ex.3 Melanie Hsu changed her name to Princess Sally
+#	2015-11-01T16:06:20.702367 127.0.0.1 [mlh2197] [] [Melanie Hsu] [Princess Sally] PUT
+# Ex.4 Student with uni=mlh2197 dropped biology lab (BIOLS2501)
+#	2015-11-01T16:09:40.726156 127.0.0.1 [mlh2197] [] [BIOLS2501] [None] DELETE
 def writeToLog(message):
 	print "Written to log"
 
-# Cases where courses will call integrator:
-# 	A course has been canceled
-#
-# Cases where students will call integrator:
-#	Student adds a class
-#	Student deletes a class
-#	Student leaves the university (dropping all classes)
-#	Student changes their name (must provide both first and last name)
-#	Student updates current coureses
-#	Student updates past courses
+# Method to help split the key and prepare it in the correct format for the log
+def formatKey(key):
+	substring = " ["
+	key = key.replace("_", " ")
+	for i in range(len(key)):
+		substring += key[i]
+	substring += "]"
+	return substring
 
-# POST with key only (primary keys are cid or uid), supports requester POST & DELETE only!
-# To call: curl -X POST http://127.0.0.1:9001/integrator/<pkeys_separated_by_underlines>/<CRUD op>
-# Ex: curl -X POST http://127.0.0.1:9001/integrator/Steve_Jobs/DELETE where Steve Jobs leaves uni
-#	  curl -X POST http://127.0.0.1:9001/integrator/COMS4111-3/DELETE where COMS4111-3 is cancelled
-@app.route('/integrator/<key>/<action>', methods = ['POST'])
-def post_pkey(key, action):
+# POST with primary key only (primary keys are cid or uid)
+# The integrator will inform the other MS about these changes
+# To call: curl -X POST http://127.0.0.1:9001/integrator/<primary_key_value_separated_by_underlines>/<CRUD op>
+# Ex1: curl -X POST http://127.0.0.1:9001/integrator/Steve_Jobs/DELETE where Steve Jobs leaves uni
+# Ex2: curl -X POST http://127.0.0.1:9001/integrator/COMS4111-3/DELETE where COMS4111-3 is cancelled
+@app.route('/integrator/<primary_key>/<action>', methods = ['POST'])
+def post_key_POST_OR_DEL(primary_key, action):
+	ip = request.remote_addr #save requester's IP address
+	if (checkIP(ip)):
+		if (not checkAction(action)):
+			data = {'error':'Specified protocol not a CRUD operation'}
+			return response(data, 403)
+	else:
+		data = {'error':'Unknown requester IP address'}
+		return response(data, 403)
+	
+	# Construct the message to log
+	message = str(datetime.datetime.now().isoformat()) + " " + str(ip)
+	message += formatKey(primary_key) + " [] [] []"
+	message += " " + str(action)
+
+	# Log the message
+	writeToLog(message)
+
+	# These actions meaningless to other MS, plus the Courses & Students DB disallow modifications to primary keys
+	if (action != 'PUT' and action != 'GET'): 
+		print "TELL OTHER MS"
+
+	# TODO: inform the other MS(s) of this change, perhaps in a separate thread that continuously checks for responses?
+	# Not entirely sure how to do this, since making a separate thread == waiting around, which is undesirable
+	# The other MS will respond with the timestamp of the log entry that needs to be deleted
+
+	# Return the logged message to the requester
+	data = {'logged':message}
+	return response(data, 200)
+
+# The integrator will NOT inform the other MS about these changes
+# POST with non-primary key, requester can specify any of the four operations
+# To call: curl -X POST http://127.0.0.1:9001/integrator/<old_keys_vals_separated_by_underlines>/<new_key_vals_separated_by_underlines>/<CRUD op>
+# Ex. curl -X POST http://127.0.0.1:9001/integrator/mlh2197/Melanie_Hsu/Princess_Sally/PUT
+# where Melanie Hsu (UNI: mlh2197) changed her name to Princess Sally
+# Ex.2 curl -X POST http://127.0.0.1:9001/integrator/mlh2197/BIOLS2501/None/DELETE
+# where Melanie Hsu (UNI: mlh2197) dropped Biology Lab
+@app.route('/integrator/<primary_key>/<key_oldval>/<key_newval>/<action>', methods = ['POST'])
+def post_key_PUT(primary_key, key_oldval, key_newval, action):
 	ip = request.remote_addr #save requester's IP address
 	if (checkIP(ip)):
 		if (not checkAction(action)): #make sure requester specified a CRUD operation
@@ -101,12 +161,14 @@ def post_pkey(key, action):
 	else:
 		data = {'error':'Unknown requester IP address'}
 		return response(data, 403)
+	
 	# Construct the message to log
-	message = str(datetime.datetime.now().isoformat()) + " " + str(ip) + " ["
-	split_key = key.replace("_", " ")
-	for i in range(len(split_key)):
-		message += split_key[i]
-	message += "] " + str(action)
+	message = str(datetime.datetime.now().isoformat()) + " " + str(ip)
+	message += formatKey(primary_key)
+	message += " []"
+	message += formatKey(key_oldval)
+	message += formatKey(key_newval)
+	message += " " + str(action)
 
 	# Log the message
 	writeToLog(message)
@@ -115,40 +177,42 @@ def post_pkey(key, action):
 	data = {'logged':message}
 	return response(data, 200)
 
-# POST with key only, supports requester PUT
-@app.route('/integrator/<key_oldval>/<key_newval>/<action>', methods = ['POST'])
-
-
 # POST with primary & foreign key
+# Supports POST & DELETE but not PUT
+# student leaves a class, student adds a class
 @app.route('/integrator/<pkey>/<fkey>/<action>', methods = ['POST'])
 def post_2key(pkey, fkey, action):
-	print pkey
-	print fkey 
-	print action
-	return "Hello World!"
+	ip = request.remote_addr #save requester's IP address
+	if (checkIP(ip)):
+		if (not checkAction(action)): #make sure requester specified a CRUD operation
+			data = {'error':'Specified protocol not a CRUD operation'}
+			return response(data, 403)
+	else:
+		data = {'error':'Unknown requester IP address'}
+		return response(data, 403)
 
+	# Construct the message to log
+	message = str(datetime.datetime.now().isoformat()) + " " + str(ip)
+	message += formatKey(pkey)
+	message += formatKey(fkey)
+	message += " []"
+	message += " []"
+	message += " " + str(action)
 
-# Action being taken
-# What operation it is
-# Each micro service needs a different IP
+	# Log the message
+	writeToLog(message)
 
-# integrator do post operations?*
+	# These actions meaningless to other MS, plus the Courses & Students DB disallow modifications to primary keys
+	if (action != 'PUT' and action != 'GET'): 
+		print "TELL OTHER MS"
 
-# Do NOT delete this! We will need parts of this later
-@app.route('/integrator/', methods = ['GET', 'POST'])
-def integrator():
-	if request.method == 'POST':
-		ip = request.remote_addr #save requester's IP address
-		if (checkIP(ip)):
-			return "POST request from " + str(ip) + "\n"
-		else:
-			return "Unknown requester IP address."
-	elif request.method == 'GET':
-		ip = request.remote_addr
-		if (checkIP(ip)):
-			return "GET request from " + str(ip) + "\n"
-		else:
-			return "Unknown requester IP address.\n"
+	# TODO: inform the other MS(s) of this change, perhaps in a separate thread that continuously checks for responses?
+	# Not entirely sure how to do this, since making a separate thread == waiting around, which is undesirable
+	# The other MS will respond with the timestamp of the log entry that needs to be deleted
+
+	# Return the logged message to the requester
+	data = {'logged':message}
+	return response(data, 200)
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
