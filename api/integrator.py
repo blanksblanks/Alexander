@@ -72,10 +72,7 @@ def main(argv):
 		print "Each IP address must be distinct (including partitions)."
 		sys.exit(1)
 
-	app.run(
-		host = "127.0.0.1",
-		port = int("9001")
-	)
+	app.run()
 
 # Check that the requester's IP address belongs to courses or one of the students micro-services
 def checkIP(ip_address):
@@ -199,10 +196,10 @@ def post_key_POST_OR_DEL(primary_key, action):
 	writeToLog(message)
 
 	# These actions meaningless to other MS, plus the Courses & Students DB disallow modifications to primary keys
-	if (action != 'PUT' and action != 'GET'): 
+	#if (action != 'PUT' and action != 'GET'): 
 		# inform the other MS(s) of this change by sending message to it
 		# The other MS will call /integrator/<timestamp>
-		notifyMS(ip, message) 
+		#notifyMS(ip, message) 
 	
 	# TODO: problem, what if the recipient MS never calls /integrator/<timestamp>?
 
@@ -271,8 +268,8 @@ def post_2key(pkey, fkey, action):
 	writeToLog(message)
 
 	# These actions meaningless to other MS, plus the Courses & Students DB disallow modifications to primary keys
-	if (action != 'PUT' and action != 'GET'): 
-		notifyMS(ip, message)
+	#if (action != 'PUT' and action != 'GET'): 
+	#	notifyMS(ip, message)
 
 	# Return the logged message to the requester
 	data = {'logged':message}
@@ -280,6 +277,8 @@ def post_2key(pkey, fkey, action):
 
 # POST message from MS telling integrator to delete a log message with a certain timestamp
 # TODO: problem, what do we do with the non-essential logs? the ones that don't affect the other DB
+# Ex. curl -X POST http://127.0.0.1:9001/integrator/2015-11-01T16:53:51.515837
+# which means delete the log message that has this timestamp
 @app.route('/integrator/<timestamp>', methods = ['POST'])
 def delete_logEntry(timestamp):
 	ip = request.remote_addr #save requester's IP address
