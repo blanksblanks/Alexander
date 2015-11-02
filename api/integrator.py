@@ -139,13 +139,10 @@ def deleteFromLog(timestamp):
 		else:
 			message += line
 		lineCount += 1
+	n.close()
 	if (len(message) > 0):
-		t = threading.Thread(None, renameFile, None, (), {})
-		t.start()
+		os.rename("newlog.txt", "log.txt")
 	return message
-
-def renameFile():
-	os.rename("newlog.txt", "log.txt")
 
 # Method to help split the key and prepare it in the correct format for the log
 def formatKey(key):
