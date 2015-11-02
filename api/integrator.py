@@ -18,8 +18,7 @@ import os
 import sys
 import datetime
 import pprint
-import threading
-from netaddr import *
+import thread
 
 from bson.json_util import dumps
 import requests
@@ -160,24 +159,26 @@ def formatKey(key):
 	return substring
 
 # Call the other micro-services
-def notifyMS(requesterIP, message):
+def notifyMS(requesterPort, message):
 	sender = None
 	# determine if students or courses was the sender
-	if (IPAddress(requesterIP) == IPAddress(coursesPort)):
+	if (int(requesterPort) == int(coursesPort)):
 		sender = 'course'
 	else:
 		for k, v in students.iteritems():
-			if IPAddress(requesterIP) == IPAddress(v):
+			if int(requesterPort) == int(v):
 				sender = 'student'
 
 	# determine who to send request to based on the sender
 	if (sender == 'course'): # broadcast to students
 		for k, v in students.iteritems():
 			print "CONTACTED STUDENTS"
-			r = requests.post(IPAddress(v), data = message)
+			data = {'important change':message}
+			#r = requests.post(k, data = json.dumps(data))
 	else:
 		print "CONTACTED COURSES"
-		r = requests.post(IPAddress(coursesPort), data = message)
+		data = {'important change':message}
+		#r = requests.post(courses, data = json.dumps(data))
 
 # POST with primary key only (primary keys are cid or uid)
 # The integrator will inform the other MS about these changes
@@ -203,10 +204,10 @@ def post_key_POST_OR_DEL(primary_key, action, port):
 	writeToLog(message)
 
 	# These actions meaningless to other MS, plus the Courses & Students DB disallow modifications to primary keys
-	#if (action != 'PUT' and action != 'GET'): 
+	if (action != 'PUT' and action != 'GET'): 
 		# inform the other MS(s) of this change by sending message to it
 		# The other MS will call /integrator/<timestamp>
-		#notifyMS(ip, message) 
+		notifyMS(port, message) 
 	
 	# TODO: problem, what if the recipient MS never calls /integrator/<timestamp>?
 
@@ -272,8 +273,8 @@ def post_2key(pkey, fkey, action, port):
 	writeToLog(message)
 
 	# These actions meaningless to other MS, plus the Courses & Students DB disallow modifications to primary keys
-	#if (action != 'PUT' and action != 'GET'): 
-	#	notifyMS(ip, message)
+	if (action != 'PUT' and action != 'GET'): 
+		notifyMS(port, message)
 
 	# Return the logged message to the requester
 	data = {'logged':message}
