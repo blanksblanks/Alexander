@@ -16,7 +16,7 @@ from flask import json
 from flask import Response
 from flask import jsonify
 app = Flask(__name__)
-port_num = int("9001")
+port_num = int("9002")
 
 # Import and initialize Mongo DB
 import pymongo
@@ -140,13 +140,16 @@ def not_found(error=None):
 # req: curl -X POST http://127.0.0.1:5000/integrator/Steve_Jobs/DELETE
 # res: {"logged": "2015-11-02T16:59:16.358478 127.0.0.1 [Steve Jobs] [] [] [] DELETE"}
 # Testing instructions:
-# $ python integrator.py courses 9001  1 students 9002
+# $ python integrator.py courses 9001 1 students 9002
 # $ python students.py
-# $ curl -X DELETE http://localhost:9001/students/ac3680
+# $ curl -X DELETE http://localhost:9002/students/ac3680
 # or use Postman
 def postEvent(uid, method):
     res = requests.post('http://127.0.0.1:5000/integrator/' + str(port_num) + '/' + uid + '/' + method)
     print 'response from server:', res.text
+
+# TODO: Implement event notifications for all CRUD ops
+# TODO:
 
 if __name__ == '__main__':
     app.run(
