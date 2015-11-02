@@ -83,13 +83,13 @@ def main(argv):
 	app.run()
 
 # Check that the requester's IP address belongs to courses or one of the students micro-services
-#def checkIP(ip_address):
-#	if (IPAddress(ip_address) == IPAddress(coursesPort)):
-#		return True
-#	for k, v in students.iteritems():
-#		if IPAddress(ip_address) == IPAddress(v):
-#			return True
-#	return False	
+def checkPort(port):
+	if (int(port) == int(coursesPort)):
+		return True
+	for k, v in students.iteritems():
+		if int(port) == int(v):
+			return True
+	return False	
 
 # Check that the requester's action is one of the CRUD operations
 def checkAction(action):
@@ -184,13 +184,16 @@ def notifyMS(requesterIP, message):
 # To call: curl -X POST http://127.0.0.1:9001/integrator/<primary_key_value_separated_by_underlines>/<CRUD op>
 # Ex1: curl -X POST http://127.0.0.1:9001/integrator/sj1004/DELETE where Steve Jobs leaves uni
 # Ex2: curl -X POST http://127.0.0.1:9001/integrator/COMS4111-3/DELETE where COMS4111-3 is cancelled
-@app.route('/integrator/<primary_key>/<action>', methods = ['POST'])
-def post_key_POST_OR_DEL(primary_key, action):
+@app.route('/integrator/<primary_key>/<port>/<action>', methods = ['POST'])
+def post_key_POST_OR_DEL(primary_key, action, port):
+	print port 
 	ip = request.remote_addr #save requester's IP address
 	if (not checkAction(action)):
 		data = {'error':'Specified protocol not a CRUD operation'}
 		return response(data, 403)
-	
+	if (not checkPort(port)): #make sure requester's port is valid
+		data = {'error':'Sender port not in list of authorized ports'}
+		return response(data, 403)
 	# Construct the message to log
 	message = str(datetime.datetime.now().isoformat()) + " " + str(ip)
 	message += formatKey(primary_key) + " [] [] []"
@@ -218,13 +221,15 @@ def post_key_POST_OR_DEL(primary_key, action):
 # where Melanie Hsu (UNI: mlh2197) changed her name to Princess Sally
 # Ex.2 curl -X POST http://127.0.0.1:9001/integrator/mlh2197/BIOLS2501/None/DELETE
 # where student with UNI mlh2197 dropped Biology Lab
-@app.route('/integrator/<primary_key>/<key_oldval>/<key_newval>/<action>', methods = ['POST'])
-def post_key_PUT(primary_key, key_oldval, key_newval, action):
+@app.route('/integrator/<primary_key>/<key_oldval>/<key_newval>/<port>/<action>', methods = ['POST'])
+def post_key_PUT(primary_key, key_oldval, key_newval, action, port):
 	ip = request.remote_addr #save requester's IP address
 	if (not checkAction(action)): #make sure requester specified a CRUD operation
 		data = {'error':'Specified protocol not a CRUD operation'}
 		return response(data, 403)
-	
+	if (not checkPort(port)): #make sure requester's port is valid
+		data = {'error':'Sender port not in list of authorized ports'}
+		return response(data, 403)
 	# Construct the message to log
 	message = str(datetime.datetime.now().isoformat()) + " " + str(ip)
 	message += formatKey(primary_key)
@@ -245,11 +250,14 @@ def post_key_PUT(primary_key, key_oldval, key_newval, action):
 # where student with UNI=wvb2103 added COMS4111-1
 # Ex.2 curl -X POST http://127.0.0.1:9001/integrator/wvb2103/COMS4111-2/DELETE
 # where student with UNI=wvb2103 dropped COMS4111-2
-@app.route('/integrator/<pkey>/<fkey>/<action>', methods = ['POST'])
-def post_2key(pkey, fkey, action):
+@app.route('/integrator/<pkey>/<fkey>/<port>/<action>', methods = ['POST'])
+def post_2key(pkey, fkey, action, port):
 	ip = request.remote_addr #save requester's IP address
 	if (not checkAction(action)): #make sure requester specified a CRUD operation
 		data = {'error':'Specified protocol not a CRUD operation'}
+		return response(data, 403)
+	if (not checkPort(port)): #make sure requester's port is valid
+		data = {'error':'Sender port not in list of authorized ports'}
 		return response(data, 403)
 
 	# Construct the message to log
@@ -275,8 +283,8 @@ def post_2key(pkey, fkey, action):
 # TODO: problem, what do we do with the non-essential logs? the ones that don't affect the other DB
 # Ex. curl -X POST http://127.0.0.1:9001/integrator/2015-11-01T16:53:51.515837
 # which means delete the log message that has this timestamp
-@app.route('/integrator/<timestamp>', methods = ['POST'])
-def delete_logEntry(timestamp):
+@app.route('/integrator/<timestamp>/<port>', methods = ['POST'])
+def delete_logEntry(timestamp, port):
 	ip = request.remote_addr #save requester's IP address
 	message = deleteFromLog(timestamp)
 	if (len(message) > 0):
