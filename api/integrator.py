@@ -22,6 +22,7 @@ import threading
 from netaddr import *
 
 from bson.json_util import dumps
+import requests
 
 # Import and initialize Flask
 from flask import Flask, url_for
@@ -153,6 +154,26 @@ def formatKey(key):
 	substring += "]"
 	return substring
 
+# Call the other micro-services
+def notifyMS(requesterIP, message):
+	sender = None
+	# determine if students or courses was the sender
+	if (IPAddress(requesterIP) == IPAddress(coursesIP)):
+		sender = 'course'
+	else:
+		for k, v in students.iteritems():
+			if IPAddress(requesterIP) == IPAddress(v):
+				sender = 'student'
+
+	# determine who to send request to based on the sender
+	if (sender == 'course'): # broadcast to students
+		for k, v in students.iteritems():
+			print "CONTACTED STUDENTS"
+			r = requests.post(IPAddress(v), data = message)
+	else:
+		print "CONTACTED COURSES"
+		r = requests.post(IPAddress(coursesIP), data = message)
+
 # POST with primary key only (primary keys are cid or uid)
 # The integrator will inform the other MS about these changes
 # To call: curl -X POST http://127.0.0.1:9001/integrator/<primary_key_value_separated_by_underlines>/<CRUD op>
@@ -179,11 +200,11 @@ def post_key_POST_OR_DEL(primary_key, action):
 
 	# These actions meaningless to other MS, plus the Courses & Students DB disallow modifications to primary keys
 	if (action != 'PUT' and action != 'GET'): 
-		print "TELL OTHER MS"
-
-	# TODO: inform the other MS(s) of this change by sending message to it, perhaps in a separate thread that continuously checks for responses?
-	# Not entirely sure how to do this, since making a separate thread == waiting around, which is undesirable
-	# The other MS will call /integrator/<timestamp> - the deletion is already handled
+		# inform the other MS(s) of this change by sending message to it
+		# The other MS will call /integrator/<timestamp>
+		notifyMS(ip, message) 
+	
+	# TODO: problem, what if the recipient MS never calls /integrator/<timestamp>?
 
 	# Return the logged message to the requester
 	data = {'logged':message}
@@ -251,11 +272,7 @@ def post_2key(pkey, fkey, action):
 
 	# These actions meaningless to other MS, plus the Courses & Students DB disallow modifications to primary keys
 	if (action != 'PUT' and action != 'GET'): 
-		print "TELL OTHER MS"
-
-	# TODO: inform the other MS(s) of this change by sending message to it, perhaps in a separate thread that continuously checks for responses?
-	# Not entirely sure how to do this, since making a separate thread == waiting around, which is undesirable
-	# The other MS will call /integrator/<timestamp> - the deletion is already handled
+		notifyMS(ip, message)
 
 	# Return the logged message to the requester
 	data = {'logged':message}
