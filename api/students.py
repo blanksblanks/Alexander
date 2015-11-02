@@ -5,6 +5,7 @@
 
 import datetime
 import pprint
+import requests
 
 from bson.json_util import dumps
 
@@ -117,6 +118,7 @@ def deleteStudent(uid):
     record = getRecordForUID(uid)
     if record:
         posts.remove({"uid":uid})
+        postEvent(uid, 'DELETE')
         return "Student deleted successfully", 200
     else:
         return "Not Found", 404
@@ -133,5 +135,20 @@ def not_found(error=None):
 
     return resp
 
+# Post student change event to integrator
+# req: curl -X POST http://127.0.0.1:5000/integrator/Steve_Jobs/DELETE
+# res: {"logged": "2015-11-02T16:59:16.358478 127.0.0.1 [Steve Jobs] [] [] [] DELETE"}
+# Testing instructions:
+# $ python integrator.py courses 9001  1 students 9002
+# $ python students.py
+# $ curl -X DELETE http://localhost:9001/students/ac3680
+# or use Postman
+def postEvent(uid, method):
+    res = requests.post('http://127.0.0.1:5000/integrator/' + uid + '/' + method)
+    print 'response from server:', res.text
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(
+        debug=True,
+        port = int("9001")
+    )
