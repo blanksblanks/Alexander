@@ -18,6 +18,7 @@ import os
 import sys
 import datetime
 import pprint
+import threading
 from netaddr import *
 
 from bson.json_util import dumps
@@ -138,11 +139,17 @@ def deleteFromLog(timestamp):
 		else:
 			message += line
 		lineCount += 1
-
-	# Rename the new file
 	if (len(message) > 0):
-		os.rename("newlog.txt", "log.txt")
+		t = threading.Thread(None, renameFile, None, (), {})
+		t.start()
+	# Rename the new file
+	#if (len(message) > 0):
+	#	os.rename("newlog.txt", "log.txt")
 	return message
+
+def renameFile():
+	print "HERE"
+	os.rename("newlog.txt", "log.txt")
 
 # Method to help split the key and prepare it in the correct format for the log
 def formatKey(key):
