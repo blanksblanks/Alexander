@@ -83,13 +83,13 @@ def main(argv):
 	app.run()
 
 # Check that the requester's IP address belongs to courses or one of the students micro-services
-def checkIP(ip_address):
-	if (IPAddress(ip_address) == IPAddress(coursesPort)):
-		return True
-	for k, v in students.iteritems():
-		if IPAddress(ip_address) == IPAddress(v):
-			return True
-	return False	
+#def checkIP(ip_address):
+#	if (IPAddress(ip_address) == IPAddress(coursesPort)):
+#		return True
+#	for k, v in students.iteritems():
+#		if IPAddress(ip_address) == IPAddress(v):
+#			return True
+#	return False	
 
 # Check that the requester's action is one of the CRUD operations
 def checkAction(action):
@@ -187,12 +187,8 @@ def notifyMS(requesterIP, message):
 @app.route('/integrator/<primary_key>/<action>', methods = ['POST'])
 def post_key_POST_OR_DEL(primary_key, action):
 	ip = request.remote_addr #save requester's IP address
-	if (checkIP(ip)):
-		if (not checkAction(action)):
-			data = {'error':'Specified protocol not a CRUD operation'}
-			return response(data, 403)
-	else:
-		data = {'error':'Unknown requester IP address'}
+	if (not checkAction(action)):
+		data = {'error':'Specified protocol not a CRUD operation'}
 		return response(data, 403)
 	
 	# Construct the message to log
@@ -225,12 +221,8 @@ def post_key_POST_OR_DEL(primary_key, action):
 @app.route('/integrator/<primary_key>/<key_oldval>/<key_newval>/<action>', methods = ['POST'])
 def post_key_PUT(primary_key, key_oldval, key_newval, action):
 	ip = request.remote_addr #save requester's IP address
-	if (checkIP(ip)):
-		if (not checkAction(action)): #make sure requester specified a CRUD operation
-			data = {'error':'Specified protocol not a CRUD operation'}
-			return response(data, 403)
-	else:
-		data = {'error':'Unknown requester IP address'}
+	if (not checkAction(action)): #make sure requester specified a CRUD operation
+		data = {'error':'Specified protocol not a CRUD operation'}
 		return response(data, 403)
 	
 	# Construct the message to log
@@ -256,12 +248,8 @@ def post_key_PUT(primary_key, key_oldval, key_newval, action):
 @app.route('/integrator/<pkey>/<fkey>/<action>', methods = ['POST'])
 def post_2key(pkey, fkey, action):
 	ip = request.remote_addr #save requester's IP address
-	if (checkIP(ip)):
-		if (not checkAction(action)): #make sure requester specified a CRUD operation
-			data = {'error':'Specified protocol not a CRUD operation'}
-			return response(data, 403)
-	else:
-		data = {'error':'Unknown requester IP address'}
+	if (not checkAction(action)): #make sure requester specified a CRUD operation
+		data = {'error':'Specified protocol not a CRUD operation'}
 		return response(data, 403)
 
 	# Construct the message to log
