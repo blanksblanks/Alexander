@@ -191,7 +191,9 @@ def post_key_POST_OR_DEL(primary_key, action, port):
 	if (not checkAction(action)):
 		data = {'error':'Specified protocol not a CRUD operation'}
 		return response(data, 403)
-	
+	if (not checkPort(port)): #make sure requester's port is valid
+		data = {'error':'Sender port not in list of authorized ports'}
+		return response(data, 403)
 	# Construct the message to log
 	message = str(datetime.datetime.now().isoformat()) + " " + str(ip)
 	message += formatKey(primary_key) + " [] [] []"
@@ -225,7 +227,9 @@ def post_key_PUT(primary_key, key_oldval, key_newval, action, port):
 	if (not checkAction(action)): #make sure requester specified a CRUD operation
 		data = {'error':'Specified protocol not a CRUD operation'}
 		return response(data, 403)
-	
+	if (not checkPort(port)): #make sure requester's port is valid
+		data = {'error':'Sender port not in list of authorized ports'}
+		return response(data, 403)
 	# Construct the message to log
 	message = str(datetime.datetime.now().isoformat()) + " " + str(ip)
 	message += formatKey(primary_key)
@@ -251,6 +255,9 @@ def post_2key(pkey, fkey, action, port):
 	ip = request.remote_addr #save requester's IP address
 	if (not checkAction(action)): #make sure requester specified a CRUD operation
 		data = {'error':'Specified protocol not a CRUD operation'}
+		return response(data, 403)
+	if (not checkPort(port)): #make sure requester's port is valid
+		data = {'error':'Sender port not in list of authorized ports'}
 		return response(data, 403)
 
 	# Construct the message to log
