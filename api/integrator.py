@@ -34,11 +34,11 @@ app = Flask(__name__)
 
 # python integrator.py <url for courses> <IP for courses> <number of student partitions> 
 # <list of student paritions followed by their IP>
-# ex. python integrator.py courses coursesIP 2 students1 students1_IP students2 students2_IP 
+# ex. python integrator.py course_URL coursePort 2 student1_URL student1_Port student2_URL student2_Port 
 
 courses = None
-coursesIP = None
-students = {} # dictionary of studentsURL: studentsIP
+coursesPort = None
+students = {} # dictionary of studentsURL: studentsPort
 acceptedOps = ['POST', 'GET', 'PUT', 'DELETE']
 
 def main(argv):
@@ -46,37 +46,45 @@ def main(argv):
 		print "Too few command-line arguments."
 		sys.exit(1)
 
-	ips = []
-	expectedUniqueIPs = 0
+	ports = []
+	expectedUniquePorts = 0
 
 	global courses
 	courses = argv[0]
 
-	global coursesIP
-	coursesIP = argv[1]
-	ips.append(coursesIP)
-	expectedUniqueIPs += 1
+	global coursesPort
+	coursesPort = argv[1]
+
+	# Check to make sure coursesPort is an integer and a valid port
+	if (not isinstance(int(coursesPort), int) or int(coursesPort) < 1024): 
+		print "argv[1] must be a valid port"
+		sys.exit(1)
+
+	ports.append(coursesPort)
+	expectedUniquePorts += 1
 
 	numberOfPartitions = int(argv[2])
 	argNumber = 3
 
 	global students
 	for i in range(numberOfPartitions):
+		if (not isinstance(int(argv[argNumber+1]), int) or int(argv[argNumber+1]) < 1024):
+			print "argv[" + str(argNumber+1) + "] must be a valid port"
+			sys.exit(1)
 		students[argv[argNumber]] = argv[argNumber+1]
-		ips.append(argv[argNumber+1])
+		ports.append(argv[argNumber+1])
 		argNumber += 2
-		expectedUniqueIPs += 1
+		expectedUniquePorts += 1
 
 	# ensure that the IP addresses are all distinct!
-	if (len(set(ips)) < expectedUniqueIPs):
-		print "Each IP address must be distinct (including partitions)."
+	if (len(set(ports)) < expectedUniquePorts):
+		print "Each port number must be distinct (including partitions)."
 		sys.exit(1)
-
 	app.run()
 
 # Check that the requester's IP address belongs to courses or one of the students micro-services
 def checkIP(ip_address):
-	if (IPAddress(ip_address) == IPAddress(coursesIP)):
+	if (IPAddress(ip_address) == IPAddress(coursesPort)):
 		return True
 	for k, v in students.iteritems():
 		if IPAddress(ip_address) == IPAddress(v):
@@ -99,7 +107,7 @@ def response(data, code):
 # Log message format: <timestamp> <requester IP> [<pkeys>] [<fkeys>] [<original non-primary key>] [<changed non-primary key>] <CRUD operation>
 # Leave any given array as empty parentheses if there aren't any
 # Ex.1 Steve Jobs leaves UNI: 
-#	2015-11-01T16:19:03.336866 127.0.0.1 [Steve Jobs] [] [] [] DELETE
+#	2015-11-01T16:19:03.336866 127.0.0.1 [sj1004] [] [] [] DELETE
 # Ex.2 COMS4111-3 is cancelled
 #	2015-11-01T16:19:43.202877 127.0.0.1 [COMS4111-3] [] [] [] DELETE
 # Ex.3 Melanie Hsu changed her name to Princess Sally
@@ -155,7 +163,7 @@ def formatKey(key):
 def notifyMS(requesterIP, message):
 	sender = None
 	# determine if students or courses was the sender
-	if (IPAddress(requesterIP) == IPAddress(coursesIP)):
+	if (IPAddress(requesterIP) == IPAddress(coursesPort)):
 		sender = 'course'
 	else:
 		for k, v in students.iteritems():
@@ -169,12 +177,12 @@ def notifyMS(requesterIP, message):
 			r = requests.post(IPAddress(v), data = message)
 	else:
 		print "CONTACTED COURSES"
-		r = requests.post(IPAddress(coursesIP), data = message)
+		r = requests.post(IPAddress(coursesPort), data = message)
 
 # POST with primary key only (primary keys are cid or uid)
 # The integrator will inform the other MS about these changes
 # To call: curl -X POST http://127.0.0.1:9001/integrator/<primary_key_value_separated_by_underlines>/<CRUD op>
-# Ex1: curl -X POST http://127.0.0.1:9001/integrator/Steve_Jobs/DELETE where Steve Jobs leaves uni
+# Ex1: curl -X POST http://127.0.0.1:9001/integrator/sj1004/DELETE where Steve Jobs leaves uni
 # Ex2: curl -X POST http://127.0.0.1:9001/integrator/COMS4111-3/DELETE where COMS4111-3 is cancelled
 @app.route('/integrator/<primary_key>/<action>', methods = ['POST'])
 def post_key_POST_OR_DEL(primary_key, action):
