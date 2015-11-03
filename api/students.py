@@ -18,19 +18,19 @@ from pymongo import MongoClient
 client = MongoClient()
 db = client.test_database
 collection = db.test_collection
-posts = db.posts #DO NOT DELETE THIS LINE!!!
-
+posts = db.posts # DO NOT DELETE THIS LINE!!!
 collection.remove({}) # start clear
 posts.remove() # start clear
 
-# Global variables
+# Globals
 port_num = int("9002")
 GET = 'GET'
 POST = 'POST'
 PUT = 'PUT'
 DELETE = 'DELETE'
 
-# POST
+# POST (WILL BE REMOVED LATER
+# Pre-populates DB when students.py is restarted by stat if on debug mode
 post = {"firstName": "Agustin",
         "lastName": "Chanfreau",
         "uid": "ac3680",
@@ -48,7 +48,7 @@ post = {"firstName": "Mel",
         "pastCourses": ["COMS948", "COMS94", "COMS9841"]}
 post_id = posts.insert_one(post).inserted_id
 
-# Returns a record given a UID
+# Returns a record given a UID (uni)
 def getRecordForUID(uid):
     record = posts.find_one({"uid": uid})
     if record:
@@ -88,14 +88,14 @@ def get_student_courses(uid):
 # POST .../students - Create a new student
 @app.route('/students', methods=[POST])
 def createNewStudent():
-    firstName=request.form['firstName']
-    lastName=request.form['lastName']
-    uid=request.form['uid']
+    firstName = request.form['firstName']
+    lastName = request.form['lastName']
+    uid = request.form['uid']
     if getRecordForUID(uid):
         return "Resource already exists", 409
-    email=request.form['email']
-    enrolledCourses=request.form['enrolledCourses']
-    pastCourses=request.form['pastCourses']
+    email = request.form['email']
+    enrolledCourses = request.form['enrolledCourses']
+    pastCourses = request.form['pastCourses']
     print firstName, lastName, uid, email, enrolledCourses, pastCourses
     post = {"firstName": firstName,
             "lastName": lastName,
@@ -139,17 +139,9 @@ def not_found(error=None):
     }
     resp = jsonify(message)
     resp.status_code = 404
-
     return resp
 
 # Post student change event to integrator
-# req: curl -X POST http://127.0.0.1:5000/integrator/Steve_Jobs/DELETE
-# res: {"logged": "2015-11-02T16:59:16.358478 127.0.0.1 [Steve Jobs] [] [] [] DELETE"}
-# Testing instructions:
-# $ python integrator.py courses 9001 1 students 9002
-# $ python students.py
-# $ curl -X DELETE http://localhost:9002/students/ac3680
-# or use Postman
 def postEvent(uid, method):
     res = requests.post('http://127.0.0.1:5000/integrator/' + str(port_num) + '/' + uid + '/' + method)
     print 'response from server:', res.text
