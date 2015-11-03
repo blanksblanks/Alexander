@@ -31,9 +31,9 @@ from flask import Response
 from flask import jsonify
 app = Flask(__name__)
 
-# python integrator.py <url for courses> <IP for courses> <number of student partitions> 
-# <list of student paritions followed by their IP>
-# ex. python integrator.py course_URL coursePort 2 student1_URL student1_Port student2_URL student2_Port 
+#python integrator.py <courseMS_URL> <courseMS_port> <number of student partitions> (for each student partition, 
+#		list the following:) <studentMS_URL> <studentMS_port>
+#ex. python integrator.py http://localhost:9001 9001 1 http://localhost:9002 9002
 
 courses = None
 coursesPort = None
@@ -105,18 +105,6 @@ def response(data, code):
 
 # Log message format: <timestamp> <requester IP> [<pkeys>] [<fkeys>] [<original non-primary key>] [<changed non-primary key>] <CRUD operation>
 # Leave any given array as empty parentheses if there aren't any
-# Ex.1 Steve Jobs leaves UNI: 
-#	2015-11-01T16:19:03.336866 127.0.0.1 [sj1004] [] [] [] DELETE
-# Ex.2 COMS4111-3 is cancelled
-#	2015-11-01T16:19:43.202877 127.0.0.1 [COMS4111-3] [] [] [] DELETE
-# Ex.3 Melanie Hsu changed her name to Princess Sally
-#	2015-11-01T16:06:20.702367 127.0.0.1 [mlh2197] [] [Melanie Hsu] [Princess Sally] PUT
-# Ex.4 Student with uni=mlh2197 dropped biology lab (BIOLS2501)
-#	2015-11-01T16:09:40.726156 127.0.0.1 [mlh2197] [] [BIOLS2501] [None] DELETE
-# Ex.5 Student with UNI=wvb2103 added COMS4111-1
-#	2015-11-01T16:45:59.339502 127.0.0.1 [wvb2103] [COMS4111-1] [] [] POST
-# Ex.6 Student with UNI=wvb2103 dropped COMS4111-2
-#	2015-11-01T16:46:23.380283 127.0.0.1 [wvb2103] [COMS4111-2] [] [] DELETE
 def writeToLog(message):
 	with open("log.txt", "a") as myfile:
 		myfile.write(message + "\n")
@@ -160,6 +148,8 @@ def formatKey(key):
 
 # Call the other micro-services
 def notifyMS(requesterPort, message):
+	print "Port: " + requesterPort
+	print "Course: " + coursesPort
 	sender = None
 	# determine if students or courses was the sender
 	if (int(requesterPort) == int(coursesPort)):
@@ -182,9 +172,6 @@ def notifyMS(requesterPort, message):
 
 # POST with primary key only (primary keys are cid or uid)
 # The integrator will inform the other MS about these changes
-# To call: curl -X POST http://127.0.0.1:9001/integrator/<primary_key_value_separated_by_underlines>/<CRUD op>
-# Ex1: curl -X POST http://127.0.0.1:9001/integrator/sj1004/DELETE where Steve Jobs leaves uni
-# Ex2: curl -X POST http://127.0.0.1:9001/integrator/COMS4111-3/DELETE where COMS4111-3 is cancelled
 @app.route('/integrator/<primary_key>/<port>/<action>', methods = ['POST'])
 def post_key_POST_OR_DEL(primary_key, action, port):
 	print port 
@@ -217,11 +204,6 @@ def post_key_POST_OR_DEL(primary_key, action, port):
 
 # The integrator will NOT inform the other MS about these changes
 # POST with non-primary key, requester can specify any of the four operations
-# To call: curl -X POST http://127.0.0.1:9001/integrator/<old_keys_vals_separated_by_underlines>/<new_key_vals_separated_by_underlines>/<CRUD op>
-# Ex.1 curl -X POST http://127.0.0.1:9001/integrator/mlh2197/Melanie_Hsu/Princess_Sally/PUT
-# where Melanie Hsu (UNI: mlh2197) changed her name to Princess Sally
-# Ex.2 curl -X POST http://127.0.0.1:9001/integrator/mlh2197/BIOLS2501/None/DELETE
-# where student with UNI mlh2197 dropped Biology Lab
 @app.route('/integrator/<primary_key>/<key_oldval>/<key_newval>/<port>/<action>', methods = ['POST'])
 def post_key_PUT(primary_key, key_oldval, key_newval, action, port):
 	ip = request.remote_addr #save requester's IP address
@@ -247,10 +229,6 @@ def post_key_PUT(primary_key, key_oldval, key_newval, action, port):
 	return response(data, 200)
 
 # POST with primary & foreign key
-# Ex.1 curl -X POST http://127.0.0.1:9001/integrator/wvb2103/COMS4111-1/POST
-# where student with UNI=wvb2103 added COMS4111-1
-# Ex.2 curl -X POST http://127.0.0.1:9001/integrator/wvb2103/COMS4111-2/DELETE
-# where student with UNI=wvb2103 dropped COMS4111-2
 @app.route('/integrator/<pkey>/<fkey>/<port>/<action>', methods = ['POST'])
 def post_2key(pkey, fkey, action, port):
 	ip = request.remote_addr #save requester's IP address
@@ -282,7 +260,7 @@ def post_2key(pkey, fkey, action, port):
 
 # POST message from MS telling integrator to delete a log message with a certain timestamp
 # TODO: problem, what do we do with the non-essential logs? the ones that don't affect the other DB
-# Ex. curl -X POST http://127.0.0.1:9001/integrator/2015-11-01T16:53:51.515837
+# Ex. curl -X POST http://127.0.0.1:5000/integrator/2015-11-02T23:54:04.839037/9002
 # which means delete the log message that has this timestamp
 @app.route('/integrator/<timestamp>/<port>', methods = ['POST'])
 def delete_logEntry(timestamp, port):
