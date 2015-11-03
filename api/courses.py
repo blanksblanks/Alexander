@@ -106,8 +106,8 @@ def not_found(error=None):
 
 
 #Add student to course.
-@app.route('/courses/add/student/<cid>/<uid>')
-def add_student(cid, uid, methods=[PUT]):
+@app.route('/courses/add/student/<cid>/<uid>', methods=[PUT])
+def add_student(cid, uid):
 	record = get_record(cid)
 	if record:
 		posts.update({"cid":cid},{"$push":{"uid_list": uid}})
@@ -133,13 +133,14 @@ def remove_student(cid, uid, methods=[DELETE]):
 
 
 #Add course to database.
-@app.route('/courses/add/course/<cid>')
-def add_course(cid, methods=[POST]):
+@app.route('/courses/add/course/<cid>', methods=[POST])
+def add_course(cid):
 	record = get_record(cid)
 	if record:
-		return
+		return "Course already exists.\n", 409
 	else:
 		posts.insert({"cid": cid, "uid_list": []})
+		return "Course added.\n", 200
 	#uid_list = posts.find({"cid": cid})
 	#uid_list.append(uid)
 	#print uid_list	
