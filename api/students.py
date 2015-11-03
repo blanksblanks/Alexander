@@ -68,6 +68,7 @@ def api_users(uid):
     record = getRecordForUID(uid)
     if record:
         print "Found matching record for UID: ", uid
+        postEvent(uid, 'GET')
         return dumps(record)
     else:
         return not_found()
@@ -78,6 +79,7 @@ def get_student_courses(uid):
     record = getRecordForUID(uid)
     if record:
         print "Found matching record for UID: ", uid
+        postEvent(uid, 'GET')
         return dumps(record["enrolledCourses"])
     else:
         return not_found()
@@ -100,6 +102,7 @@ def createNewStudent():
             "enrolledCourses": enrolledCourses,
             "pastCourses": pastCourses}
     post_id = posts.insert_one(post).inserted_id
+    postEvent(uid, 'POST')
     return "New Student Created", 201
 
 # PUT .../students/<uid> - Update student field
@@ -111,6 +114,7 @@ def updateStudent(uid):
             return "You can't update a student's UID", 409
     for k,v in request.form.iteritems():
         posts.update({"uid":uid},{"$set":{k:v}})
+    postEvent(uid, 'PUT')
     return "Updates made successfully", 200
 
 # DELETE .../students/<uid> - Delete a student
@@ -147,9 +151,6 @@ def not_found(error=None):
 def postEvent(uid, method):
     res = requests.post('http://127.0.0.1:5000/integrator/' + str(port_num) + '/' + uid + '/' + method)
     print 'response from server:', res.text
-
-# TODO: Implement event notifications for all CRUD ops
-# TODO:
 
 if __name__ == '__main__':
     app.run(
