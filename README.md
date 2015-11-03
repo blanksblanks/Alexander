@@ -27,10 +27,12 @@ $ curl -X POST http://127.0.0.1:5000/integrator/Steve_Jobs/DELETE
 * Or if you prefer GUIs, use [Postman](https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop)
 * Note that localhost is equivalent to 127.0.0.1
 * Note which ports are running the separate microservices:
+
 | Microservice | Port Number|
 | ------------- | ------------- |
 | Router  | 1234 |
 | Integrator | 5000  |
 | Courses | 9001 |
 | Students | 9002 |
+
 * Additional students microservice partitions run on 9003, 9004, etc.
