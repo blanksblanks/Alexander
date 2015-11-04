@@ -92,6 +92,14 @@ def get_record(cid):
     else:
         return 0
 
+# Finds a student in a record given a CID (course identifier) and UID (student identifier)
+def check_student(cid, uid):
+	record = posts.find_one({"cid": cid, "uid_list": uid})
+	print record
+	if record:
+		return record 
+	else: 
+		return 0
 
 # Handle nonexistent routes
 @app.errorhandler(404)
@@ -110,6 +118,9 @@ def not_found(error=None):
 def add_student(cid, uid):
 	record = get_record(cid)
 	if record:
+		if check_student(cid, uid):
+			message = "Student(" + uid + ") already exists\n"
+			return message, 409
 		posts.update({"cid":cid},{"$push":{"uid_list": uid}})
 		message = "Added student(" + uid + ") to course(" + cid + ")\n"
 		return message, 200
@@ -126,6 +137,9 @@ def add_student(cid, uid):
 def remove_student(cid, uid):
 	record = get_record(cid)
 	if record:
+		if not check_student(cid, uid):
+			message = "Student(" + uid + ") does not exist\n"
+			return message, 409
 		posts.update({"cid":cid},{"$pull":{"uid_list": uid}})
 		message = "Removed student(" + uid + ") from course(" + cid + ")\n"
 		return message, 200
