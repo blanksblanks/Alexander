@@ -120,11 +120,12 @@ def add_student(cid, uid):
 
 
 #Remove student from course.
-@app.route('/courses/remove/student/<cid>/<uid>')
-def remove_student(cid, uid, methods=[DELETE]):
+@app.route('/courses/remove/student/<cid>/<uid>', methods=[DELETE])
+def remove_student(cid, uid):
 	record = get_record(cid)
 	if record:
 		posts.update({"cid":cid},{"$pull":{"uid_list": uid}})
+		return "Student removed.", 200
 	else:
 		return not_found()
 	#posts = db.posts
@@ -148,11 +149,12 @@ def add_course(cid):
 
 
 #Remove course from database.
-@app.route('/courses/remove/course/<cid>')
-def remove_course(cid, methods=[DELETE]):
+@app.route('/courses/remove/course/<cid>', methods=[DELETE])
+def remove_course(cid):
 	record = get_record(cid)
 	if record:
 		posts.remove({"cid":cid})
+		return "Course removed.", 200
 	else:
 		return not_found()
 	#uid_list = posts.find({"cid": cid})
