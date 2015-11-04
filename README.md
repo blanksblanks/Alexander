@@ -23,6 +23,26 @@ $ curl -X POST http://127.0.0.1:5000/integrator/Steve_Jobs/DELETE
 # Response should look like {"logged": "2015-11-02T16:59:16.358478 127.0.0.1 [Steve Jobs] [] [] [] DELETE"}
 
 ```
+Invocation:
+mongod --dbpath ~/Desktop/Alexander/api/data/db
+python courses.py
+python students.py
+
+Tests for Courses:
+Add a course to the database:
+curl -X POST http://127.0.0.1:9001/courses/add/course/COMSW4111
+
+Add a student to the course:
+curl -X PUT http://127.0.0.1:9001/courses/add/student/COMSW4111/mlh2197
+
+Remove a student from the course:
+curl -X DELETE http://127.0.0.1:9001/courses/remove/student/COMSW4111/mlh2197
+
+Remove a course from the database:
+curl -X DELETE http://127.0.0.1:9001/courses/remove/course/COMSW4111
+
+Tests for Students:
+
 * See above [reference above](http://curl.haxx.se/docs/httpscripting.html) for how to use curl for HTTP requests
 * Or if you prefer GUIs, use [Postman](https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop)
 * Note that localhost is equivalent to 127.0.0.1
