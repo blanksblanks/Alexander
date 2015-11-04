@@ -1,29 +1,29 @@
 # Alexander
 
-A student and course management system of four microservices:
+##### A student and course management system of four microservices:
 * students
 * courses
 * integrator
 * router
 
-Useful references:
+Useful References:
 * http://blog.luisrei.com/articles/flaskrest.html
 * http://api.mongodb.org/python/current/tutorial.html
 * pymongo functions: http://altons.github.io/python/2013/01/21/gentle-introduction-to-mongodb-using-pymongo/
 * using curl for HTTP requests: http://curl.haxx.se/docs/httpscripting.html
 
-Invocation:
+Start Program:
+* In separate tabs on the command line:
 ```
-mongod --dbpath ~/Desktop/Alexander/api/data/db
-python courses.py
-python students.py
-python integrator.py courses 9001 1 students 9002
+$ mongod --dbpath ~/Desktop/Alexander/api/data/db
+$ python courses.py
+$ python students.py
+$ python integrator.py courses 9001 1 students 9002
 ```
 
 Example Tests for Students:
 ```
-$ python integrator.py courses 9001 1 students 9002
-$ python students.py
+# Delete a student
 $ curl -X DELETE http://localhost:9002/students/ac3680
 
 # To interact with integrator directly (testing only, users should never talk to integrator)
