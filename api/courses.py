@@ -111,6 +111,8 @@ def add_student(cid, uid):
 	record = get_record(cid)
 	if record:
 		posts.update({"cid":cid},{"$push":{"uid_list": uid}})
+		message = "Added student(" + uid + ") to course(" + cid + ")\n"
+		return message, 200
 	else:
 		return not_found()
 	#uid_list = posts.find({"cid": cid})
@@ -125,7 +127,8 @@ def remove_student(cid, uid):
 	record = get_record(cid)
 	if record:
 		posts.update({"cid":cid},{"$pull":{"uid_list": uid}})
-		return "Student removed.", 200
+		message = "Removed student(" + uid + ") from course(" + cid + ")\n"
+		return message, 200
 	else:
 		return not_found()
 	#posts = db.posts
@@ -138,10 +141,12 @@ def remove_student(cid, uid):
 def add_course(cid):
 	record = get_record(cid)
 	if record:
-		return "Course already exists.\n", 409
+		message = "Course(" + cid + ") already exists\n"
+		return message, 409
 	else:
 		posts.insert({"cid": cid, "uid_list": []})
-		return "Course added.\n", 200
+		message = "Course(" + cid + ") added\n"
+		return message, 200
 	#uid_list = posts.find({"cid": cid})
 	#uid_list.append(uid)
 	#print uid_list	
@@ -154,7 +159,8 @@ def remove_course(cid):
 	record = get_record(cid)
 	if record:
 		posts.remove({"cid":cid})
-		return "Course removed.", 200
+		message = "Course(" + cid + ") removed\n"
+		return message, 200
 	else:
 		return not_found()
 	#uid_list = posts.find({"cid": cid})
@@ -184,4 +190,4 @@ def postEvent(cid, method):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=port_num)
