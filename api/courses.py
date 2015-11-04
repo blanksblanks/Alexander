@@ -123,6 +123,7 @@ def add_student(cid, uid):
 			return message, 409
 		posts.update({"cid":cid},{"$push":{"uid_list": uid}})
 		message = "Added student(" + uid + ") to course(" + cid + ")\n"
+		postEvent(cid, uid, PUT)
 		return message, 200
 	else:
 		return not_found()
@@ -142,6 +143,7 @@ def remove_student(cid, uid):
 			return message, 409
 		posts.update({"cid":cid},{"$pull":{"uid_list": uid}})
 		message = "Removed student(" + uid + ") from course(" + cid + ")\n"
+		postEvent(cid, uid, DELETE)
 		return message, 200
 	else:
 		return not_found()
@@ -160,6 +162,7 @@ def add_course(cid):
 	else:
 		posts.insert({"cid": cid, "uid_list": []})
 		message = "Course(" + cid + ") added\n"
+		postEvent(cid, None, POST)
 		return message, 200
 	#uid_list = posts.find({"cid": cid})
 	#uid_list.append(uid)
@@ -174,6 +177,7 @@ def remove_course(cid):
 	if record:
 		posts.remove({"cid":cid})
 		message = "Course(" + cid + ") removed\n"
+		postEvent(cid, None, DELETE)
 		return message, 200
 	else:
 		return not_found()
@@ -183,10 +187,19 @@ def remove_course(cid):
 	#print posts.find({"cid": cid})
 
 # Post course change event to integrator
-def postEvent(cid, method):
-    res = requests.post('http://127.0.0.1:5000/integrator/' + str(port_num) + '/' + cid + '/' + method)
-    print 'response from server:', res.text
+def postEvent(cid, uid, action):
+	post = 'http://127.0.0.1:5000/integrator/'
+	if (cid): #pkey
+		post += cid + "/"
+	if (uid): #fkey
+		post += uid + "/"
+	post += str(port_num) + "/"
+	post += str(action)
+	print "POST to integrator: " + post
+	res = requests.post(post)
+	print 'response from server:', res.text
 
+#http://127.0.0.1:5000/integrator/COMS4111-3/9001/DELETE
 
 #To test the methods
 #cid1 = '4115'

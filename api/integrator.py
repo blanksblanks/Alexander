@@ -174,7 +174,7 @@ def notifyMS(requesterPort, message):
 # The integrator will inform the other MS about these changes
 @app.route('/integrator/<primary_key>/<port>/<action>', methods = ['POST'])
 def post_key_POST_OR_DEL(primary_key, action, port):
-	print port 
+	print "Received request from " + str(port) 
 	ip = request.remote_addr #save requester's IP address
 	if (not checkAction(action)):
 		data = {'error':'Specified protocol not a CRUD operation'}
@@ -191,10 +191,10 @@ def post_key_POST_OR_DEL(primary_key, action, port):
 	writeToLog(message)
 
 	# These actions meaningless to other MS, plus the Courses & Students DB disallow modifications to primary keys
-	if (action != 'PUT' and action != 'GET'): 
+	#if (action != 'PUT' and action != 'GET'): 
 		# inform the other MS(s) of this change by sending message to it
 		# The other MS will call /integrator/<timestamp>
-		notifyMS(port, message) 
+		#notifyMS(port, message) 
 	
 	# TODO: problem, what if the recipient MS never calls /integrator/<timestamp>?
 
@@ -206,6 +206,7 @@ def post_key_POST_OR_DEL(primary_key, action, port):
 # POST with non-primary key, requester can specify any of the four operations
 @app.route('/integrator/<primary_key>/<key_oldval>/<key_newval>/<port>/<action>', methods = ['POST'])
 def post_key_PUT(primary_key, key_oldval, key_newval, action, port):
+	print "Received request from " + str(port) 
 	ip = request.remote_addr #save requester's IP address
 	if (not checkAction(action)): #make sure requester specified a CRUD operation
 		data = {'error':'Specified protocol not a CRUD operation'}
@@ -231,6 +232,7 @@ def post_key_PUT(primary_key, key_oldval, key_newval, action, port):
 # POST with primary & foreign key
 @app.route('/integrator/<pkey>/<fkey>/<port>/<action>', methods = ['POST'])
 def post_2key(pkey, fkey, action, port):
+	print "Received request from " + str(port) 
 	ip = request.remote_addr #save requester's IP address
 	if (not checkAction(action)): #make sure requester specified a CRUD operation
 		data = {'error':'Specified protocol not a CRUD operation'}
@@ -251,8 +253,8 @@ def post_2key(pkey, fkey, action, port):
 	writeToLog(message)
 
 	# These actions meaningless to other MS, plus the Courses & Students DB disallow modifications to primary keys
-	if (action != 'PUT' and action != 'GET'): 
-		notifyMS(port, message)
+	#if (action != 'PUT' and action != 'GET'): 
+	#	notifyMS(port, message)
 
 	# Return the logged message to the requester
 	data = {'logged':message}
