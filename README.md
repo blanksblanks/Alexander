@@ -12,6 +12,14 @@ Useful references:
 * pymongo functions: http://altons.github.io/python/2013/01/21/gentle-introduction-to-mongodb-using-pymongo/
 * using curl for HTTP requests: http://curl.haxx.se/docs/httpscripting.html
 
+Invocation:
+```
+mongod --dbpath ~/Desktop/Alexander/api/data/db
+python courses.py
+python students.py
+python integrator.py courses 9001 1 students 9002
+```
+
 Example Tests for Students:
 ```
 $ python integrator.py courses 9001 1 students 9002
@@ -21,7 +29,6 @@ $ curl -X DELETE http://localhost:9002/students/ac3680
 # To interact with integrator directly (testing only, users should never talk to integrator)
 $ curl -X POST http://127.0.0.1:5000/9002/integrator/Steve_Jobs/DELETE
 # Response should look like {"logged": "2015-11-02T16:59:16.358478 127.0.0.1 [Steve Jobs] [] [] [] DELETE"}
-
 ```
 * See above [reference above](http://curl.haxx.se/docs/httpscripting.html) for how to use curl for HTTP requests
 * Or if you prefer GUIs, use [Postman](https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop)
@@ -36,14 +43,6 @@ $ curl -X POST http://127.0.0.1:5000/9002/integrator/Steve_Jobs/DELETE
 | Students | 9002 |
 
 * Additional students microservice partitions run on 9003, 9004, etc.
-
-Invocation:
-```
-mongod --dbpath ~/Desktop/Alexander/api/data/db
-python courses.py
-python students.py
-
-```
 
 Example Tests for Courses:
 ```
