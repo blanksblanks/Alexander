@@ -81,7 +81,7 @@ def get_student_courses(uid):
     if record:
         print "Found matching record for UID: ", uid
         #postEvent(uid, GET)
-        return dumps(record["enrolledCourses"])
+        return dumps(record["cid_list"])
     else:
         return not_found()
 
