@@ -35,8 +35,8 @@ post = {"firstName": "Agustin",
         "lastName": "Chanfreau",
         "uid": "ac3680",
         "email": "ac3680@columbia.edu",
-        "enrolledCourses": ["COMS123", "COMS1234", "COMS12345"],
-        "pastCourses": ["COMS948", "COMS94", "COMS9841"]
+        "cid_list": ["COMS123", "COMS1234", "COMS12345"],
+        "past_cid_list": ["COMS948", "COMS94", "COMS9841"]
         }
 post_id = posts.insert_one(post).inserted_id
 
@@ -44,8 +44,8 @@ post = {"firstName": "Mel",
         "lastName": "Chaasdau",
         "uid": "ab3680",
         "email": "ab3680@columbia.edu",
-        "enrolledCourses": ["COMS123", "COMS1234", "COMS12345"],
-        "pastCourses": ["COMS948", "COMS94", "COMS9841"]}
+        "cid_list": ["COMS123", "COMS1234", "COMS12345"],
+        "past_cid_list": ["COMS948", "COMS94", "COMS9841"]}
 post_id = posts.insert_one(post).inserted_id
 
 # Returns a record given a UID (uni)
@@ -121,15 +121,52 @@ def updateStudent(uid):
     #postEvent(uid, PUT)
     return "Updates made successfully", 200
 
-# add one class
-@app.route('/students/<uid>/<cid>', methods=[PUT])
-def addClass(uid, cid):
+#Add one course to student.
+@app.route('/students/add/course/<uid>/<cid>', methods=[PUT])
+def add_course(uid, cid):
+	record = get_record(uid)
+	if record:
+		if check_course(uid, cid):
+			message = "Course(" + cid + ") already exists\n"
+			return message, 409
+		posts.update({"uid":uid},{"$push":{"cid_list": cid}})
+		message = "Added course(" + cid + ") to student(" + uid + ")\n"
+		postEvent(uid, cid, PUT)
+		return message, 200
+	else:
+		return not_found()
 
+# Remove one course from student.
+@app.route('/students/remove/course/<uid>/<cid>', methods=[DELETE])
+def remove_course(uid, cid):
+	record = get_record(uid)
+	if record:
+		if not check_course(uid, cid):
+			message = "Course(" + cid + ") does not exist\n"
+			return message, 409
+		posts.update({"uid":uid},{"$pull":{"cid_list": cid}})
+		message = "Removed course(" + cid + ") from student(" + uid + ")\n"
+		postEvent(uid, cid, DELETE)
+		return message, 200
+	else:
+		return not_found()
 
-# delete one class
-@app.route('/students/<uid>/<cid>', methods=[DELETE])
-def deleteClass(uid, cid):
+# Returns a record given a UID (course identifier)
+def get_record(uid):
+    record = posts.find_one({"uid": uid})
+    if record:
+        return record
+    else:
+        return 0
 
+# Finds a course in a record given a UID (student identifier) and a CID (course identifier)
+def check_course(uid, cid):
+	record = posts.find_one({"uid": uid, "cid_list": cid})
+	print record
+	if record:
+		return record
+	else:
+		return 0
 
 # DELETE .../students/<uid> - Delete a student
 @app.route('/students/<uid>', methods=[DELETE])
@@ -154,9 +191,17 @@ def not_found(error=None):
     return resp
 
 # Post student change event to integrator
-def postEvent(uid, method):
-    res = requests.post('http://127.0.0.1:5000/integrator/' + str(port_num) + '/' + uid + '/' + method)
-    print 'response from server:', res.text
+def postEvent(uid, cid, action):
+	post = 'http://127.0.0.1:5000/integrator/'
+	if (uid): #pkey
+		post += uid + "/"
+	if (cid): #fkey
+		post += cid + "/"
+	post += str(port_num) + "/"
+	post += str(action)
+	print "POST to integrator: " + post
+	res = requests.post(post)
+	print 'response from server:', res.text
 
 if __name__ == '__main__':
     app.run(
