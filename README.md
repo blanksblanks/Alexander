@@ -15,34 +15,34 @@ Useful References:
 Start Program:
 * In separate tabs on the command line:
 ```
-$ mongod --dbpath ~/Desktop/Alexander/api/data/db
-$ python courses.py
-$ python students.py
-$ python integrator.py courses 9001 1 students 9002
+mongod --dbpath ~/Desktop/Alexander/api/data/db
+python api/courses.py
+python api/students.py
+python api/integrator.py courses 9001 1 students 9002
 ```
 
 Example Tests for Students:
 ```
 # Get all students
-$  curl -X GET http://localhost:9002/students
+curl -X GET http://localhost:9002/students
 
 # Get one student
-$ curl -X GET http://localhost:9002/students/ac3680
+curl -X GET http://localhost:9002/students/ac3680
 
 # Post a new student to the database
-$ curl --data "firstName=Melanie&lastName=Hsu&uid=mlh2197" http://127.0.0.1:9002/students
+curl --data "firstName=Melanie&lastName=Hsu&uid=mlh2197" http://127.0.0.1:9002/students
 
 # Delete a student
-$ curl -X DELETE http://localhost:9002/students/ac3680
+curl -X DELETE http://localhost:9002/students/ac3680
 
 # Add course to student's list of courses
-$ curl -X PUT http://localhost:9002/students/add/course/ab3680/COMS123
+curl -X PUT http://localhost:9002/students/ab3680/courses/COMS6998
 
 # Delete course from student's list of courses
-$ curl -X DELETE http://localhost:9002/students/remove/course/ac3680/COMS1234
+curl -X DELETE http://localhost:9002/students/ac3680/courses/COMS1234
 
 # As an example of how to interact with integrator directly (testing only, users should never talk to integrator)
-$ curl -X POST http://127.0.0.1:5000/9002/integrator/Steve_Jobs/DELETE
+curl -X POST http://127.0.0.1:5000/9002/integrator/Steve_Jobs/DELETE
 # Response should look like {"logged": "2015-11-02T16:59:16.358478 127.0.0.1 [Steve Jobs] [] [] [] DELETE"}
 ```
 * See above [reference above](http://curl.haxx.se/docs/httpscripting.html) for how to use curl for HTTP requests

@@ -122,7 +122,7 @@ def updateStudent(uid):
     return "Updates made successfully", 200
 
 #Add one course to student.
-@app.route('/students/add/course/<uid>/<cid>', methods=[PUT])
+@app.route('/students/<uid>/courses/<cid>', methods=[PUT])
 def add_course(uid, cid):
 	record = get_record(uid)
 	if record:
@@ -137,7 +137,7 @@ def add_course(uid, cid):
 		return not_found()
 
 # Remove one course from student.
-@app.route('/students/remove/course/<uid>/<cid>', methods=[DELETE])
+@app.route('/students/<uid>/courses/<cid>', methods=[DELETE])
 def remove_course(uid, cid):
 	record = get_record(uid)
 	if record:
