@@ -117,8 +117,19 @@ def updateStudent(uid):
             return "You can't update a student's UID", 409
     for k,v in request.form.iteritems():
         posts.update({"uid":uid},{"$set":{k:v}})
+        # call integrator once per change*
     #postEvent(uid, PUT)
     return "Updates made successfully", 200
+
+# add one class
+@app.route('/students/<uid>/<cid>', methods=[PUT])
+def addClass(uid, cid):
+
+
+# delete one class
+@app.route('/students/<uid>/<cid>', methods=[DELETE])
+def deleteClass(uid, cid):
+
 
 # DELETE .../students/<uid> - Delete a student
 @app.route('/students/<uid>', methods=[DELETE])
