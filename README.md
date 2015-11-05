@@ -29,6 +29,9 @@ curl -X GET http://localhost:9002/students
 # Get one student
 curl -X GET http://localhost:9002/students/ac3680
 
+# Get one student's courses
+curl -X GET http://localhost:9002/students/ac3680/courses
+
 # Post a new student to the database
 curl --data "firstName=Melanie&lastName=Hsu&uid=mlh2197" http://127.0.0.1:9002/students
 
@@ -64,11 +67,21 @@ Example Tests for Courses:
 # Add a course to the database:
 curl -d "cid=COMS6998" http://127.0.0.1:9001/courses
 
+# Get all courses
+curl -X GET http://localhost:9001/courses
+
+# Get one course
+curl -X GET http://localhost:9001/courses/COMS6998
+
+# Get one course's students
+curl -X GET http://localhost:9001/courses/COMS6998/students
+
 # Remove a course from the database:
 curl -X DELETE http://127.0.0.1:9001/courses/COMS6998
 
 # Add a student to the course:
 curl -X PUT http://127.0.0.1:9001/courses/COMS6998/students/nb2406
+
 # Remove a student from the course:
 curl -X DELETE http://127.0.0.1:9001/courses/COMS6998/students/nb2406
 ```
