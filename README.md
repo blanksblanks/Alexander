@@ -62,14 +62,13 @@ curl -X POST http://127.0.0.1:5000/9002/integrator/Steve_Jobs/DELETE
 Example Tests for Courses:
 ```
 # Add a course to the database:
-curl -X POST http://127.0.0.1:9001/courses/add/course/COMSW4111
-
-# Add a student to the course:
-curl -X PUT http://127.0.0.1:9001/courses/add/student/COMSW4111/mlh2197
-
-# Remove a student from the course:
-curl -X DELETE http://127.0.0.1:9001/courses/remove/student/COMSW4111/mlh2197
+curl -d "cid=COMS6998" http://127.0.0.1:9001/courses
 
 # Remove a course from the database:
-curl -X DELETE http://127.0.0.1:9001/courses/remove/course/COMSW4111
+curl -X DELETE http://127.0.0.1:9001/courses/COMS6998
+
+# Add a student to the course:
+curl -X PUT http://127.0.0.1:9001/courses/COMS6998/students/nb2406
+# Remove a student from the course:
+curl -X DELETE http://127.0.0.1:9001/courses/COMS6998/students/nb2406
 ```

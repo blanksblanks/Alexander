@@ -18,7 +18,7 @@ import requests
 
 # Mongo db stuff
 from pymongo import MongoClient
-client = MongoClient() 
+client = MongoClient()
 db = client.test_database
 course_collection = db.test_collection
 posts = db.posts
@@ -42,7 +42,7 @@ DELETE = 'DELETE'
 #uid_list.append(uid)
 #posts.update({"cid":cid},{"$push":{"uid_list": uid}})
 #uid_list = list(posts.find({"cid": cid}))
-#print uid_list	
+#print uid_list
 #print posts.find({"cid": cid})
 
 
@@ -53,7 +53,7 @@ DELETE = 'DELETE'
 #uid = 'cd231'
 #uid_list = posts.find()
 #uid_list.append(uid)
-#print uid_list	
+#print uid_list
 #print posts.find({"cid": cid})
 
 #cid1 = '4115'
@@ -65,9 +65,9 @@ DELETE = 'DELETE'
 #add_course(cid2)
 #add_student(cid2, uid2)
 #uid_list1 = list(posts.find({"cid": cid1}))
-#print uid_list1	
+#print uid_list1
 #uid_list2 = list(posts.find({"cid": cid2}))
-#print uid_list2	
+#print uid_list2
 
 #def add_student(cid, uid):
 #	record = get_record(cid)
@@ -75,7 +75,7 @@ DELETE = 'DELETE'
 #		posts.update({"cid":cid},{"$push":{"uid_list": uid}})
 #	else:
 #		return not_found()
-	
+
 #def add_course(cid):
 #	record = get_record(cid)
 #	if record:
@@ -97,8 +97,8 @@ def check_student(cid, uid):
 	record = posts.find_one({"cid": cid, "uid_list": uid})
 	print record
 	if record:
-		return record 
-	else: 
+		return record
+	else:
 		return 0
 
 # Handle nonexistent routes
@@ -114,7 +114,7 @@ def not_found(error=None):
 
 
 #Add student to course.
-@app.route('/courses/add/student/<cid>/<uid>', methods=[PUT])
+@app.route('/courses/<cid>/students/<uid>', methods=[PUT])
 def add_student(cid, uid):
 	record = get_record(cid)
 	if record:
@@ -129,12 +129,12 @@ def add_student(cid, uid):
 		return not_found()
 	#uid_list = posts.find({"cid": cid})
 	#uid_list.append(uid)
-	#print uid_list	
+	#print uid_list
 	#print posts.find({"cid": cid})
 
 
 #Remove student from course.
-@app.route('/courses/remove/student/<cid>/<uid>', methods=[DELETE])
+@app.route('/courses/<cid>/students/<uid>', methods=[DELETE])
 def remove_student(cid, uid):
 	record = get_record(cid)
 	if record:
@@ -153,8 +153,9 @@ def remove_student(cid, uid):
 
 
 #Add course to database.
-@app.route('/courses/add/course/<cid>', methods=[POST])
-def add_course(cid):
+@app.route('/courses', methods=[POST])
+def add_course():
+	cid = request.form['cid']
 	record = get_record(cid)
 	if record:
 		message = "Course(" + cid + ") already exists\n"
@@ -162,16 +163,16 @@ def add_course(cid):
 	else:
 		posts.insert({"cid": cid, "uid_list": []})
 		message = "Course(" + cid + ") added\n"
-		postEvent(cid, None, POST)
+		# postEvent(cid, None, POST)
 		return message, 200
 	#uid_list = posts.find({"cid": cid})
 	#uid_list.append(uid)
-	#print uid_list	
+	#print uid_list
 	#print posts.find({"cid": cid})
 
 
 #Remove course from database.
-@app.route('/courses/remove/course/<cid>', methods=[DELETE])
+@app.route('/courses/<cid>', methods=[DELETE])
 def remove_course(cid):
 	record = get_record(cid)
 	if record:
@@ -183,7 +184,7 @@ def remove_course(cid):
 		return not_found()
 	#uid_list = posts.find({"cid": cid})
 	#uid_list.append(uid)
-	#print uid_list	
+	#print uid_list
 	#print posts.find({"cid": cid})
 
 # Post course change event to integrator
@@ -211,9 +212,9 @@ def postEvent(cid, uid, action):
 #add_course(cid2)
 #add_student(cid2, uid2)
 #uid_list1 = list(posts.find({"cid": cid1}))
-#print uid_list1	
+#print uid_list1
 #uid_list2 = list(posts.find({"cid": cid2}))
-#print uid_list2	
+#print uid_list2
 
 
 if __name__ == '__main__':
