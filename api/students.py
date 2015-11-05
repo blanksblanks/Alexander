@@ -69,7 +69,7 @@ def api_users(uid):
     record = getRecordForUID(uid)
     if record:
         print "Found matching record for UID: ", uid
-        postEvent(uid, GET)
+        #postEvent(uid, GET)
         return dumps(record)
     else:
         return not_found()
@@ -80,7 +80,7 @@ def get_student_courses(uid):
     record = getRecordForUID(uid)
     if record:
         print "Found matching record for UID: ", uid
-        postEvent(uid, GET)
+        #postEvent(uid, GET)
         return dumps(record["enrolledCourses"])
     else:
         return not_found()
@@ -88,35 +88,36 @@ def get_student_courses(uid):
 # POST .../students - Create a new student
 @app.route('/students', methods=[POST])
 def createNewStudent():
-    firstName = request.form['firstName']
-    lastName = request.form['lastName']
+    print "Called createNewStudent"
+    print request.form
     uid = request.form['uid']
+    print "uid: " + uid
     if getRecordForUID(uid):
-        return "Resource already exists", 409
-    email = request.form['email']
-    enrolledCourses = request.form['enrolledCourses']
-    pastCourses = request.form['pastCourses']
-    print firstName, lastName, uid, email, enrolledCourses, pastCourses
-    post = {"firstName": firstName,
-            "lastName": lastName,
-            "uid": uid,
-            "email": email,
-            "enrolledCourses": enrolledCourses,
-            "pastCourses": pastCourses}
-    post_id = posts.insert_one(post).inserted_id
-    postEvent(uid, POST)
-    return "New Student Created", 201
+        return "Resource already exists\n", 409
+    posts.insert({"uid":uid})
+    for k,v in request.form.iteritems():
+        if k == "uid":
+            continue
+        else:
+            posts.update({"uid":uid},{"$set":{k:v}})
+    print posts
+    #postEvent(uid, POST)
+    message = "New student(" + uid + ") created\n"
+    return message, 201
 
 # PUT .../students/<uid> - Update student field
 @app.route('/students/<uid>', methods=[PUT])
 def updateStudent(uid):
+    #fields = list of attributes
+    #for attr in fields:
+    #    request.args[attr]
     print "now we are updating the following uid: ", uid
     for k,v in request.form.iteritems():
         if k == "uid":
             return "You can't update a student's UID", 409
     for k,v in request.form.iteritems():
         posts.update({"uid":uid},{"$set":{k:v}})
-    postEvent(uid, PUT)
+    #postEvent(uid, PUT)
     return "Updates made successfully", 200
 
 # DELETE .../students/<uid> - Delete a student
@@ -125,7 +126,7 @@ def deleteStudent(uid):
     record = getRecordForUID(uid)
     if record:
         posts.remove({"uid":uid})
-        postEvent(uid, DELETE)
+        #postEvent(uid, DELETE)
         return "Student deleted successfully", 200
     else:
         return "Not Found", 404
