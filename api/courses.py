@@ -112,6 +112,34 @@ def not_found(error=None):
     resp.status_code = 404
     return resp
 
+# GET .../courses - returns all information for all courses
+@app.route('/courses', methods = [GET])
+def all_courses():
+    r = posts.find() # r is a cursor
+    l = list(r) # l is a list
+    return dumps(l)
+
+# GET .../courses/<cid> - returns all information for specified course
+@app.route('/courses/<cid>', methods = [GET])
+def get_course(cid):
+    record = get_record(cid)
+    if record:
+        print "Found matching record for CID: ", cid
+        #postEvent(cid, GET)
+        return dumps(record)
+    else:
+        return not_found()
+
+# GET .../courses/<cid>/courses - returns students for specific course
+@app.route('/courses/<cid>/students', methods = [GET])
+def get_courses_students(cid):
+    record = get_record(cid)
+    if record:
+        print "Found matching record for CID: ", cid
+        #postEvent(cid, GET)
+        return dumps(record["uid_list"])
+    else:
+        return not_found()
 
 #Add student to course.
 @app.route('/courses/<cid>/students/<uid>', methods=[PUT])
