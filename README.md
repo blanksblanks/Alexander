@@ -23,10 +23,25 @@ $ python integrator.py courses 9001 1 students 9002
 
 Example Tests for Students:
 ```
+# Get all students
+$  curl -X GET http://localhost:9002/students
+
+# Get one student
+$ curl -X GET http://localhost:9002/students/ac3680
+
+# Post a new student to the database
+$ curl --data "firstName=Melanie&lastName=Hsu&uid=mlh2197" http://127.0.0.1:9002/students
+
 # Delete a student
 $ curl -X DELETE http://localhost:9002/students/ac3680
 
-# To interact with integrator directly (testing only, users should never talk to integrator)
+# Add course to student's list of courses
+$ curl -X PUT http://localhost:9002/students/add/course/ab3680/COMS123
+
+# Delete course from student's list of courses
+$ curl -X DELETE http://localhost:9002/students/remove/course/ac3680/COMS1234
+
+# As an example of how to interact with integrator directly (testing only, users should never talk to integrator)
 $ curl -X POST http://127.0.0.1:5000/9002/integrator/Steve_Jobs/DELETE
 # Response should look like {"logged": "2015-11-02T16:59:16.358478 127.0.0.1 [Steve Jobs] [] [] [] DELETE"}
 ```
