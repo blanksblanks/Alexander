@@ -157,8 +157,24 @@ def notifyMS(requesterPort, message):
 # The integrator will inform the other MS about these changes
 @app.route('/integrator/<primary_key>/<action>', methods = ['POST'])
 def post_key_POST_OR_DEL(primary_key, action):
-	print request.data
-	data = {'hello':'world'}
+	data = request.data
+	print data
+	requesterPort = data.get("port", default=None)
+	if (requesterPort is None):
+		data = {'error': 'No port specified'}
+		print "no port specfified"
+		return response(data, 400)
+
+	# figure out who the sender was
+	sender = None
+	if (int(requesterPort) == int(coursesPort)):
+		sender = 'course'
+	else:
+		for k, v in students.iteritems():
+			if int(requesterPort) == int(v):
+				sender = 'student'
+
+	data = {'received':request.data}
 	return response(data, 200)
 
 # POST message from MS telling integrator to delete a log message with a certain timestamp
