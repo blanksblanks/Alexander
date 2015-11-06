@@ -1,18 +1,8 @@
-# The integrator micro-service ahahaha
+# The integrator micro-service
 # It logs every transaction but will not always inform the other MS about the changes
 
-# Cases where courses will call integrator:
-# 	A course has been canceled
-#
-# Cases where students will call integrator:
-#	Student adds a class
-#	Student deletes a class
-#	Student leaves the university (dropping all classes)
-#	Student changes their name (must provide both first and last name)*
-#	Student updates past courses*
-
 # *: do not tell other MS about this (the change will not affect them)
-# It is essential that each MS, including partitions, has its own distinct IP address
+# It is essential that each MS, including partitions, has its own distinct port
 
 import os
 import sys
@@ -75,13 +65,13 @@ def main(argv):
 		argNumber += 2
 		expectedUniquePorts += 1
 
-	# ensure that the IP addresses are all distinct!
+	# ensure that the ports are all distinct!
 	if (len(set(ports)) < expectedUniquePorts):
 		print "Each port number must be distinct (including partitions)."
 		sys.exit(1)
 	app.run()
 
-# Check that the requester's IP address belongs to courses or one of the students micro-services
+# Check that the requester's port belongs to courses or one of the students micro-services
 def checkPort(port):
 	if (int(port) == int(coursesPort)):
 		return True
@@ -89,13 +79,6 @@ def checkPort(port):
 		if int(port) == int(v):
 			return True
 	return False	
-
-# Check that the requester's action is one of the CRUD operations
-def checkAction(action):
-	if (action in acceptedOps):
-		return True
-	else:
-		return False
 
 # Creates response to return to the user
 def response(data, code):
@@ -175,39 +158,15 @@ def notifyMS(requesterPort, message):
 @app.route('/integrator/<primary_key>/<action>', methods = ['POST'])
 def post_key_POST_OR_DEL(primary_key, action):
 	print "Received request from " + request.form['port']
-	ip = request.remote_addr #save requester's IP address
-	#if (not checkAction(action)):
-	#	data = {'error':'Specified protocol not a CRUD operation'}
-	#	return response(data, 403)
-	#if (not checkPort(port)): #make sure requester's port is valid
-	#	data = {'error':'Sender port not in list of authorized ports'}
-	#	return response(data, 403)
-	# Construct the message to log
-	#message = str(datetime.datetime.now().isoformat()) + " " + str(ip)
-	#message += formatKey(primary_key) + " [] [] []"
-	#message += " " + str(action)
-
-	# Log the message
-	#writeToLog(message)
-
-	# These actions meaningless to other MS, plus the Courses & Students DB disallow modifications to primary keys
-	#if (action != 'PUT' and action != 'GET'): 
-		# inform the other MS(s) of this change by sending message to it
-		# The other MS will call /integrator/<timestamp>
-		#notifyMS(port, message) 
-	
-	# TODO: problem, what if the recipient MS never calls /integrator/<timestamp>?
-
-	# Return the logged message to the requester
-	#data = {'logged':message}
-	return response("GOTCHA!", 200)
+	data = {'hello':'world'}
+	return response(data, 200)
 
 # POST message from MS telling integrator to delete a log message with a certain timestamp
 # TODO: problem, what do we do with the non-essential logs? the ones that don't affect the other DB
 # Ex. curl -X POST http://127.0.0.1:5000/integrator/2015-11-02T23:54:04.839037/9002
 # which means delete the log message that has this timestamp
-@app.route('/integrator/<timestamp>/<port>', methods = ['POST'])
-def delete_logEntry(timestamp, port):
+@app.route('/integrator/<timestamp>', methods = ['POST'])
+def delete_logEntry(timestamp):
 	ip = request.remote_addr #save requester's IP address
 	message = deleteFromLog(timestamp)
 	if (len(message) > 0):
