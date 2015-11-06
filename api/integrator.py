@@ -157,25 +157,38 @@ def notifyMS(requesterPort, message):
 # The integrator will inform the other MS about these changes
 @app.route('/integrator/<primary_key>/<action>', methods = ['POST'])
 def post_key_POST_OR_DEL(primary_key, action):
-	data = request.data
-	print data
-	requesterPort = data.get("port", default=None)
-	if (requesterPort is None):
+	data = json.loads(request.data) #convert data into dictionary
+	requester_port = data["port"]
+	if (requester_port is None):
 		data = {'error': 'No port specified'}
-		print "no port specfified"
 		return response(data, 400)
 
 	# figure out who the sender was
 	sender = None
-	if (int(requesterPort) == int(coursesPort)):
+	if (int(requester_port) == int(coursesPort)):
 		sender = 'course'
 	else:
 		for k, v in students.iteritems():
-			if int(requesterPort) == int(v):
+			if int(requester_port) == int(v):
 				sender = 'student'
-
+	print data
+	for k, v in data.iteritems():
+		print "key: " + k
+		print "value: " + v
 	data = {'received':request.data}
 	return response(data, 200)
+"""
+for k,v in request.form.iteritems():
+        if k == "uid":
+            return "You can't update a student's UID", 409
+    v1 = find_user(uid)
+    for k,v in request.form.iteritems():
+        posts.update({"uid":uid},{"$set":{k:v}})
+    data = json.dumps({"port": port_num, "v1" : v1, "v2": find_user(uid), "cid": None})
+    post_event(uid, data, PUT)
+    return "Updates made successfully", 200
+			sender = 'student'
+"""
 
 # POST message from MS telling integrator to delete a log message with a certain timestamp
 # TODO: problem, what do we do with the non-essential logs? the ones that don't affect the other DB
