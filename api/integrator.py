@@ -155,8 +155,8 @@ def notifyMS(requesterPort, message):
 
 # POST with primary key only (primary keys are cid or uid)
 # The integrator will inform the other MS about these changes
-@app.route('/integrator/<primary_key>/<action>', methods = ['POST'])
-def post_key_POST_OR_DEL(primary_key, action):
+@app.route('/integrator/<primary_key>', methods = ['POST'])
+def post_key_POST_OR_DEL(primary_key):
 	data = json.loads(request.data) #convert data into dictionary
 	requester_port = data["port"]
 	if (requester_port is None):
@@ -173,8 +173,11 @@ def post_key_POST_OR_DEL(primary_key, action):
 				sender = 'student'
 	print data
 	for k, v in data.iteritems():
-		print "key: " + k
-		print "value: " + v
+		print "key: " + str(k)
+		print "value: " + str(v)
+
+	# figure out the sender's action
+
 	data = {'received':request.data}
 	return response(data, 200)
 """
@@ -189,21 +192,6 @@ for k,v in request.form.iteritems():
     return "Updates made successfully", 200
 			sender = 'student'
 """
-
-# POST message from MS telling integrator to delete a log message with a certain timestamp
-# TODO: problem, what do we do with the non-essential logs? the ones that don't affect the other DB
-# Ex. curl -X POST http://127.0.0.1:5000/integrator/2015-11-02T23:54:04.839037/9002
-# which means delete the log message that has this timestamp
-@app.route('/integrator/<timestamp>', methods = ['POST'])
-def delete_logEntry(timestamp):
-	ip = request.remote_addr #save requester's IP address
-	message = deleteFromLog(timestamp)
-	if (len(message) > 0):
-		data = {'deleted':message}
-		return response(data, 200)
-	else:
-		data = {'error':'Message does not exist'}
-		return response(data, 404)
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
