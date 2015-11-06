@@ -157,7 +157,7 @@ def notifyMS(requesterPort, message):
 # The integrator will inform the other MS about these changes
 @app.route('/integrator/<primary_key>/<action>', methods = ['POST'])
 def post_key_POST_OR_DEL(primary_key, action):
-	print "Received request from " + request.form['port']
+	print request.data
 	data = {'hello':'world'}
 	return response(data, 200)
 
