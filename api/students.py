@@ -12,7 +12,7 @@ from flask import Response
 from flask import jsonify
 app = Flask(__name__)
 
-# Import and initialize Mongo DB
+# Import and initialize MongoDB
 import pymongo
 from pymongo import MongoClient
 client = MongoClient()
@@ -29,8 +29,7 @@ POST = 'POST'
 PUT = 'PUT'
 DELETE = 'DELETE'
 
-# POST (WILL BE REMOVED LATER
-# Pre-populates DB when students.py is restarted by stat if on debug mode
+# Prepopulate DB when students.py is restarted by stat if on debug mode
 post = {"firstName": "Agustin",
         "lastName": "Chanfreau",
         "uid": "ac3680",
@@ -48,51 +47,44 @@ post = {"firstName": "Mel",
         "past_cid_list": ["COMS948", "COMS94", "COMS9841"]}
 post_id = posts.insert_one(post).inserted_id
 
-# Returns a record given a UID (uni)
-def getRecordForUID(uid):
-    record = posts.find_one({"uid": uid})
-    if record:
-        return record
-    else:
-        return 0
-
 # GET .../students - returns all information for all students
 @app.route('/students', methods = [GET])
 def all_users():
     r = posts.find() # r is a cursor
     l = list(r) # l is a list
+    post_event(None, None, GET)
     return dumps(l)
 
 # GET .../students/<uid> - returns all information for specified student
 @app.route('/students/<uid>', methods = [GET])
-def api_users(uid):
-    record = getRecordForUID(uid)
+def find_user(uid):
+    record = get_record(uid)
     if record:
         print "Found matching record for UID: ", uid
-        #postEvent(uid, GET)
+        post_event(uid, None, GET)
         return dumps(record)
     else:
         return not_found()
 
-# GET .../students/<uid>/courses - returns enrolledCourses for specified student
+# GET .../students/<uid>/courses - returns enrolled courses for specified student
 @app.route('/students/<uid>/courses', methods = [GET])
 def get_student_courses(uid):
-    record = getRecordForUID(uid)
+    record = get_record(uid)
     if record:
         print "Found matching record for UID: ", uid
-        #postEvent(uid, GET)
+        post_event(uid, None, GET)
         return dumps(record["cid_list"])
     else:
         return not_found()
 
 # POST .../students - Create a new student
 @app.route('/students', methods=[POST])
-def createNewStudent():
-    print "Called createNewStudent"
+def create_new_student():
+    print "Called create_new_student"
     print request.form
     uid = request.form['uid']
     print "uid: " + uid
-    if getRecordForUID(uid):
+    if get_record(uid):
         return "Resource already exists\n", 409
     posts.insert({"uid":uid})
     for k,v in request.form.iteritems():
@@ -101,15 +93,15 @@ def createNewStudent():
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
     print posts
-    #postEvent(uid, POST)
+    post_event(uid, None, POST)
     message = "New student(" + uid + ") created\n"
     return message, 201
 
 # PUT .../students/<uid> - Update student field
 @app.route('/students/<uid>', methods=[PUT])
-def updateStudent(uid):
-    #fields = list of attributes
-    #for attr in fields:
+def update_student(uid):
+    # fields = list of attributes
+    # for attr in fields:
     #    request.args[attr]
     print "now we are updating the following uid: ", uid
     for k,v in request.form.iteritems():
@@ -118,7 +110,7 @@ def updateStudent(uid):
     for k,v in request.form.iteritems():
         posts.update({"uid":uid},{"$set":{k:v}})
         # call integrator once per change*
-    #postEvent(uid, PUT)
+    post_event(uid, None, PUT)
     return "Updates made successfully", 200
 
 #Add one course to student.
@@ -131,7 +123,7 @@ def add_course(uid, cid):
 			return message, 409
 		posts.update({"uid":uid},{"$push":{"cid_list": cid}})
 		message = "Added course(" + cid + ") to student(" + uid + ")\n"
-		postEvent(uid, cid, PUT)
+		post_event(uid, cid, PUT)
 		return message, 200
 	else:
 		return not_found()
@@ -146,35 +138,18 @@ def remove_course(uid, cid):
 			return message, 409
 		posts.update({"uid":uid},{"$pull":{"cid_list": cid}})
 		message = "Removed course(" + cid + ") from student(" + uid + ")\n"
-		postEvent(uid, cid, DELETE)
+		post_event(uid, cid, DELETE)
 		return message, 200
 	else:
 		return not_found()
 
-# Returns a record given a UID (course identifier)
-def get_record(uid):
-    record = posts.find_one({"uid": uid})
-    if record:
-        return record
-    else:
-        return 0
-
-# Finds a course in a record given a UID (student identifier) and a CID (course identifier)
-def check_course(uid, cid):
-	record = posts.find_one({"uid": uid, "cid_list": cid})
-	print record
-	if record:
-		return record
-	else:
-		return 0
-
 # DELETE .../students/<uid> - Delete a student
 @app.route('/students/<uid>', methods=[DELETE])
-def deleteStudent(uid):
-    record = getRecordForUID(uid)
+def delete_student(uid):
+    record = get_record(uid)
     if record:
         posts.remove({"uid":uid})
-        #postEvent(uid, DELETE)
+        post_event(uid, None, DELETE)
         return "Student deleted successfully", 200
     else:
         return "Not Found", 404
@@ -191,17 +166,34 @@ def not_found(error=None):
     return resp
 
 # Post student change event to integrator
-def postEvent(uid, cid, action):
-	post = 'http://127.0.0.1:5000/integrator/'
+def post_event(uid, cid, action):
+	url = 'http://127.0.0.1:5000/integrator/'
 	if (uid): #pkey
-		post += uid + "/"
+		url += uid + "/"
 	if (cid): #fkey
-		post += cid + "/"
-	post += str(port_num) + "/"
-	post += str(action)
-	print "POST to integrator: " + post
-	res = requests.post(post)
+		url += cid + "/"
+	url += str(port_num) + "/"
+	url += str(action)
+	print "POST to integrator: " + url
+	res = requests.post(url) # data=json.dumps(find_user(uid)
 	print 'response from server:', res.text
+
+# Returns a record given a UID (uni)
+def get_record(uid):
+    record = posts.find_one({"uid": uid})
+    if record:
+        return record
+    else:
+        return 0
+
+# Finds a course in a record given a UID (student identifier) and a CID (course identifier)
+def check_course(uid, cid):
+	record = posts.find_one({"uid": uid, "cid_list": cid})
+	print record
+	if record:
+		return record
+	else:
+		return 0
 
 if __name__ == '__main__':
     app.run(
