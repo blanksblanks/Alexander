@@ -24,28 +24,29 @@ python api/integrator.py courses 9001 1 students 9002
 Example Tests for Students:
 ```
 Add a student to the database:
-curl --data "firstName=Melanie&lastName=Hsu&uid=mlh2197&enrolledCourses=COMS4111&pastCourses=COMS4118" http://127.0.0.1:9002/students
+curl --data "first_name=Melanie&last_name=Hsu&uid=mlh2197&cid_list=COMS4111,COMS6998&past_cid_list=COMS4118" http://127.0.0.1:9002/students
 
 Get all info on all students:
 curl -X GET http://127.0.0.1:9002/students
 
-Get info about one student from the database: 
+Get info about one student from the database:
 curl -X GET http://127.0.0.1:9002/students/mlh2197
 
-Add a class to a student’s schedule:
-curl --data "cid=COMS4156" http://127.0.0.1:9002/students/mlh2197/courses
+Add a class to a student's schedule:
+curl -X POST --data "cid=COMS4156" http://127.0.0.1:9002/students/mlh2197/courses
 
-Delete a class from a student’s schedule:
+Delete a class from a student's schedule:
 curl -X DELETE http://127.0.0.1:9002/students/mlh2197/courses/COMS4156
 
-Get a student’s courses from the database: TRY IT AGAIN
+Get a student's courses from the database: TRY IT AGAIN
 curl -X GET http://127.0.0.1:9002/students/mlh2197/courses
 
 Delete a student:
 curl -X DELETE http://127.0.0.1:9002/students/ac3680
 
 Update a student (non-primary key):
-curl -X PUT -d firstName=Princess -d lastName=Sally http://127.0.0.1:9002/students/mlh2197
+curl -X PUT -d first_name=Princess -d last_name=Sally http://127.0.0.1:9002/students/mlh2197
+curl -X PUT --data "first_name=Princess&last_name=Sally&cid_list=COMS4111,COMS6998,COMS4115" http://127.0.0.1:9002/students/mlh2197
 
 # As an example of how to interact with integrator directly (testing only, users should never talk to integrator)
 curl -X POST http://127.0.0.1:5000/9002/integrator/Steve_Jobs/DELETE

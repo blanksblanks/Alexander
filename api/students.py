@@ -75,6 +75,7 @@ def get_student_courses(uid):
         return not_found()
 
 # POST .../students - Create a new student
+# TODO: return appropriate error when uid is not provided (currently 400 which indicates server error)
 @app.route('/students', methods = [POST])
 def create_new_student():
     print "Called create_new_student"
@@ -95,7 +96,7 @@ def create_new_student():
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
     print posts
-    data = json.dumps({"port": port_num, "v1" : None, "v2": find_user(uid), "cid": None})
+    data = json.dumps({"port": port_num, "v1" : "", "v2": find_user(uid), "cid": "", "verb": POST})
     post_event(uid, data, POST)
     message = "New student(" + uid + ") created\n"
     return message, 201
@@ -116,7 +117,7 @@ def update_student(uid):
                 posts.update({"uid":uid},{"$push":{"cid_list": cid}})
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
-    data = json.dumps({"port": port_num, "v1" : v1, "v2": find_user(uid), "cid": None})
+    data = json.dumps({"port": port_num, "v1" : v1, "v2": find_user(uid), "cid": "", "verb": PUT})
     post_event(uid, data, PUT)
     return "Updates made successfully", 200
 
@@ -132,7 +133,7 @@ def add_course(uid):
         v1 = find_user(uid)
         posts.update({"uid":uid},{"$push":{"cid_list": cid}})
         message = "Added course(" + cid + ") to student(" + uid + ")\n"
-        data = json.dumps({"port": port_num, "v1" : v1, "v2": find_user(uid), "cid": cid})
+        data = json.dumps({"port": port_num, "v1" : v1, "v2": find_user(uid), "cid": cid, "verb": POST})
         post_event(uid, data, POST)
         return message, 200
     else:
@@ -149,7 +150,7 @@ def remove_course(uid, cid):
         v1 = find_user(uid)
         posts.update({"uid":uid},{"$pull":{"cid_list": cid}})
         message = "Removed course(" + cid + ") from student(" + uid + ")\n"
-        data = json.dumps({"port": port_num, "v1" : v1, "v2": find_user(uid), "cid": cid})
+        data = json.dumps({"port": port_num, "v1" : v1, "v2": find_user(uid), "cid": cid, "verb": DELETE})
         post_event(uid, data, DELETE)
         return message, 200
     else:
@@ -162,7 +163,7 @@ def delete_student(uid):
     if record:
         v1 = find_user(uid)
         posts.remove({"uid":uid})
-        data = json.dumps({"port": port_num, "v1" : v1, "v2": None, "cid": None})
+        data = json.dumps({"port": port_num, "v1" : v1, "v2": "", "cid": "", "verb": DELETE})
         post_event(uid, data, DELETE)
         return "Student deleted successfully", 200
     else:
@@ -181,7 +182,7 @@ def not_found(error=None):
 
 # Post student change event (non-GET requests) to integrator
 def post_event(uid, user_data, action):
-    url = 'http://127.0.0.1:5000/integrator/' + uid + '/' + action
+    url = 'http://127.0.0.1:5000/integrator/' + uid
     print "POST to integrator: " + url
     res = requests.post(url, data=user_data) # data=json.dumps(find_user(uid))
     print 'response from server:', res.text
