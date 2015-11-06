@@ -83,10 +83,15 @@ def create_new_student():
     print "uid: " + uid
     if get_record(uid):
         return "Resource already exists\n", 409
+    # Initialize courses list as empty list
     posts.insert({"uid":uid})
     for k,v in request.form.iteritems():
         if k == "uid":
             continue
+        elif k == "cid_list":
+            # Add each course in a comma-delimited string to cid_list
+            for cid in v.split(','):
+                posts.update({"uid":uid},{"$push":{"cid_list": cid}})
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
     print posts
@@ -98,16 +103,19 @@ def create_new_student():
 # PUT .../students/<uid> - Update student field
 @app.route('/students/<uid>', methods=[PUT])
 def update_student(uid):
-    # fields = list of attributes
-    # for attr in fields:
-    #    request.args[attr]
     print "now we are updating the following uid: ", uid
     for k,v in request.form.iteritems():
         if k == "uid":
             return "You can't update a student's UID", 409
     v1 = find_user(uid)
     for k,v in request.form.iteritems():
-        posts.update({"uid":uid},{"$set":{k:v}})
+        if k == "cid_list":
+            continue
+        elif k == "cid_list":
+            for cid in v.split(','):
+                posts.update({"uid":uid},{"$push":{"cid_list": cid}})
+        else:
+            posts.update({"uid":uid},{"$set":{k:v}})
     data = json.dumps({"port": port_num, "v1" : v1, "v2": find_user(uid), "cid": None})
     post_event(uid, data, PUT)
     return "Updates made successfully", 200
