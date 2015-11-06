@@ -52,7 +52,6 @@ post_id = posts.insert_one(post).inserted_id
 def all_users():
     r = posts.find() # r is a cursor
     l = list(r) # l is a list
-    post_event(None, None, GET)
     return dumps(l)
 
 # GET .../students/<uid> - returns all information for specified student
@@ -61,7 +60,6 @@ def find_user(uid):
     record = get_record(uid)
     if record:
         print "Found matching record for UID: ", uid
-        post_event(uid, None, GET)
         return dumps(record)
     else:
         return not_found()
@@ -72,7 +70,6 @@ def get_student_courses(uid):
     record = get_record(uid)
     if record:
         print "Found matching record for UID: ", uid
-        post_event(uid, None, GET)
         return dumps(record["cid_list"])
     else:
         return not_found()
@@ -93,7 +90,8 @@ def create_new_student():
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
     print posts
-    post_event(uid, None, POST)
+    data = json.dumps({"v1": None, "v2": find_user(uid), "cid": None})
+    post_event(uid, data, POST)
     message = "New student(" + uid + ") created\n"
     return message, 201
 
@@ -107,50 +105,57 @@ def update_student(uid):
     for k,v in request.form.iteritems():
         if k == "uid":
             return "You can't update a student's UID", 409
+    v1 = find_user(uid)
     for k,v in request.form.iteritems():
         posts.update({"uid":uid},{"$set":{k:v}})
-        # call integrator once per change*
-    post_event(uid, None, PUT)
+    data = json.dumps({"v1": v1, "v2": find_user(uid), "cid": None})
+    post_event(uid, data, PUT)
     return "Updates made successfully", 200
 
 #Add one course to student.
 @app.route('/students/<uid>/courses', methods=[POST])
 def add_course(uid):
     cid = request.form['cid']
-	record = get_record(uid)
-	if record:
-		if check_course(uid, cid):
-			message = "Course(" + cid + ") already exists\n"
-			return message, 409
-		posts.update({"uid":uid},{"$push":{"cid_list": cid}})
-		message = "Added course(" + cid + ") to student(" + uid + ")\n"
-		post_event(uid, cid, PUT)
-		return message, 200
-	else:
-		return not_found()
+    record = get_record(uid)
+    if record:
+        if check_course(uid, cid):
+            message = "Course(" + cid + ") already exists\n"
+            return message, 409
+        v1 = find_user(uid)
+        posts.update({"uid":uid},{"$push":{"cid_list": cid}})
+        message = "Added course(" + cid + ") to student(" + uid + ")\n"
+        data = json.dumps({"v1": v1, "v2": find_user(uid), "cid": cid})
+        post_event(uid, data, POST)
+        return message, 200
+    else:
+        return not_found()
 
 # Remove one course from student.
 @app.route('/students/<uid>/courses/<cid>', methods=[DELETE])
 def remove_course(uid, cid):
-	record = get_record(uid)
-	if record:
-		if not check_course(uid, cid):
-			message = "Course(" + cid + ") does not exist\n"
-			return message, 409
-		posts.update({"uid":uid},{"$pull":{"cid_list": cid}})
-		message = "Removed course(" + cid + ") from student(" + uid + ")\n"
-		post_event(uid, cid, DELETE)
-		return message, 200
-	else:
-		return not_found()
+    record = get_record(uid)
+    if record:
+        if not check_course(uid, cid):
+            message = "Course(" + cid + ") does not exist\n"
+            return message, 409
+        v1 = find_user(uid)
+        posts.update({"uid":uid},{"$pull":{"cid_list": cid}})
+        message = "Removed course(" + cid + ") from student(" + uid + ")\n"
+        data = json.dumps({"v1": v1, "v2": find_user(uid), "cid": cid})
+        post_event(uid, data, DELETE)
+        return message, 200
+    else:
+        return not_found()
 
 # DELETE .../students/<uid> - Delete a student
 @app.route('/students/<uid>', methods=[DELETE])
 def delete_student(uid):
     record = get_record(uid)
     if record:
+        v1 = find_user(uid)
         posts.remove({"uid":uid})
-        post_event(uid, None, DELETE)
+        data = json.dumps({"v1": v1, "v2": None, "cid": None})
+        post_event(uid, data, DELETE)
         return "Student deleted successfully", 200
     else:
         return "Not Found", 404
@@ -166,18 +171,16 @@ def not_found(error=None):
     resp.status_code = 404
     return resp
 
-# Post student change event to integrator
-def post_event(uid, cid, action):
-	url = 'http://127.0.0.1:5000/integrator/'
-	if (uid): #pkey
-		url += uid + "/"
-	if (cid): #fkey
-		url += cid + "/"
-	url += str(port_num) + "/"
-	url += str(action)
-	print "POST to integrator: " + url
-	res = requests.post(url) # data=json.dumps(find_user(uid))
-	print 'response from server:', res.text
+# Post student change event (non-GET requests) to integrator
+def post_event(uid, user_data, action):
+    url = 'http://127.0.0.1:5000/integrator/'
+    if (uid): #pkey
+        url += uid + "/"
+    url += str(port_num) + "/"
+    url += str(action)
+    print "POST to integrator: " + url
+    res = requests.post(url, data=user_data) # data=json.dumps(find_user(uid))
+    print 'response from server:', res.text
 
 # Returns a record given a UID (uni)
 def get_record(uid):
@@ -189,12 +192,12 @@ def get_record(uid):
 
 # Finds a course in a record given a UID (student identifier) and a CID (course identifier)
 def check_course(uid, cid):
-	record = posts.find_one({"uid": uid, "cid_list": cid})
-	print record
-	if record:
-		return record
-	else:
-		return 0
+    record = posts.find_one({"uid": uid, "cid_list": cid})
+    print record
+    if record:
+        return record
+    else:
+        return 0
 
 if __name__ == '__main__':
     app.run(
