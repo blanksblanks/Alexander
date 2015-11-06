@@ -32,8 +32,8 @@ curl -X GET http://localhost:9002/students/ac3680
 # Get one student's courses
 curl -X GET http://localhost:9002/students/ac3680/courses
 
-# Post a new student to the database
-curl --data "firstName=Melanie&lastName=Hsu&uid=mlh2197" http://127.0.0.1:9002/students
+# Post a new student to the collection of students
+curl -X POST --data "first_name=Melanie&last_name=Hsu&uid=mlh2197" http://127.0.0.1:9002/students
 
 # Delete a student
 curl -X DELETE http://localhost:9002/students/ac3680

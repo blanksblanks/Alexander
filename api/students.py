@@ -30,8 +30,8 @@ PUT = 'PUT'
 DELETE = 'DELETE'
 
 # Prepopulate DB when students.py is restarted by stat if on debug mode
-post = {"firstName": "Agustin",
-        "lastName": "Chanfreau",
+post = {"first_name": "Agustin",
+        "last_name": "Chanfreau",
         "uid": "ac3680",
         "email": "ac3680@columbia.edu",
         "cid_list": ["COMS123", "COMS1234", "COMS12345"],
@@ -39,8 +39,8 @@ post = {"firstName": "Agustin",
         }
 post_id = posts.insert_one(post).inserted_id
 
-post = {"firstName": "Mel",
-        "lastName": "Chaasdau",
+post = {"first_name": "Mel",
+        "last_name": "Chaasdau",
         "uid": "ab3680",
         "email": "ab3680@columbia.edu",
         "cid_list": ["COMS123", "COMS1234", "COMS12345"],
@@ -78,7 +78,7 @@ def get_student_courses(uid):
         return not_found()
 
 # POST .../students - Create a new student
-@app.route('/students', methods=[POST])
+@app.route('/students', methods = [POST])
 def create_new_student():
     print "Called create_new_student"
     print request.form
@@ -176,7 +176,7 @@ def post_event(uid, cid, action):
 	url += str(port_num) + "/"
 	url += str(action)
 	print "POST to integrator: " + url
-	res = requests.post(url) # data=json.dumps(find_user(uid)
+	res = requests.post(url) # data=json.dumps(find_user(uid))
 	print 'response from server:', res.text
 
 # Returns a record given a UID (uni)
