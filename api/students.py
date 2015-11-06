@@ -114,8 +114,9 @@ def update_student(uid):
     return "Updates made successfully", 200
 
 #Add one course to student.
-@app.route('/students/<uid>/courses/<cid>', methods=[PUT])
-def add_course(uid, cid):
+@app.route('/students/<uid>/courses', methods=[POST])
+def add_course(uid):
+    cid = request.form['cid']
 	record = get_record(uid)
 	if record:
 		if check_course(uid, cid):

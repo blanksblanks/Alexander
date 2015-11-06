@@ -38,8 +38,8 @@ curl --data "firstName=Melanie&lastName=Hsu&uid=mlh2197" http://127.0.0.1:9002/s
 # Delete a student
 curl -X DELETE http://localhost:9002/students/ac3680
 
-# Add course to student's list of courses
-curl -X PUT http://localhost:9002/students/ab3680/courses/COMS6998
+# Post course to student's collection of courses
+curl -X POST --data "cid=COMS6998" http://localhost:9002/students/ab3680/courses
 
 # Delete course from student's list of courses
 curl -X DELETE http://localhost:9002/students/ac3680/courses/COMS1234
