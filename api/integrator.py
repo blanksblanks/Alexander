@@ -172,23 +172,23 @@ def notifyMS(requesterPort, message):
 
 # POST with primary key only (primary keys are cid or uid)
 # The integrator will inform the other MS about these changes
-@app.route('/integrator/<primary_key>/<port>/<action>', methods = ['POST'])
-def post_key_POST_OR_DEL(primary_key, action, port):
-	print "Received request from " + str(port) 
+@app.route('/integrator/<primary_key>/<action>', methods = ['POST'])
+def post_key_POST_OR_DEL(primary_key, action):
+	print "Received request from " + request.form['port']
 	ip = request.remote_addr #save requester's IP address
-	if (not checkAction(action)):
-		data = {'error':'Specified protocol not a CRUD operation'}
-		return response(data, 403)
-	if (not checkPort(port)): #make sure requester's port is valid
-		data = {'error':'Sender port not in list of authorized ports'}
-		return response(data, 403)
+	#if (not checkAction(action)):
+	#	data = {'error':'Specified protocol not a CRUD operation'}
+	#	return response(data, 403)
+	#if (not checkPort(port)): #make sure requester's port is valid
+	#	data = {'error':'Sender port not in list of authorized ports'}
+	#	return response(data, 403)
 	# Construct the message to log
-	message = str(datetime.datetime.now().isoformat()) + " " + str(ip)
-	message += formatKey(primary_key) + " [] [] []"
-	message += " " + str(action)
+	#message = str(datetime.datetime.now().isoformat()) + " " + str(ip)
+	#message += formatKey(primary_key) + " [] [] []"
+	#message += " " + str(action)
 
 	# Log the message
-	writeToLog(message)
+	#writeToLog(message)
 
 	# These actions meaningless to other MS, plus the Courses & Students DB disallow modifications to primary keys
 	#if (action != 'PUT' and action != 'GET'): 
@@ -199,66 +199,8 @@ def post_key_POST_OR_DEL(primary_key, action, port):
 	# TODO: problem, what if the recipient MS never calls /integrator/<timestamp>?
 
 	# Return the logged message to the requester
-	data = {'logged':message}
-	return response(data, 200)
-
-# The integrator will NOT inform the other MS about these changes
-# POST with non-primary key, requester can specify any of the four operations
-@app.route('/integrator/<primary_key>/<key_oldval>/<key_newval>/<port>/<action>', methods = ['POST'])
-def post_key_PUT(primary_key, key_oldval, key_newval, action, port):
-	print "Received request from " + str(port) 
-	ip = request.remote_addr #save requester's IP address
-	if (not checkAction(action)): #make sure requester specified a CRUD operation
-		data = {'error':'Specified protocol not a CRUD operation'}
-		return response(data, 403)
-	if (not checkPort(port)): #make sure requester's port is valid
-		data = {'error':'Sender port not in list of authorized ports'}
-		return response(data, 403)
-	# Construct the message to log
-	message = str(datetime.datetime.now().isoformat()) + " " + str(ip)
-	message += formatKey(primary_key)
-	message += " []"
-	message += formatKey(key_oldval)
-	message += formatKey(key_newval)
-	message += " " + str(action)
-
-	# Log the message
-	writeToLog(message)
-
-	# Return the logged message to the requester
-	data = {'logged':message}
-	return response(data, 200)
-
-# POST with primary & foreign key
-@app.route('/integrator/<pkey>/<fkey>/<port>/<action>', methods = ['POST'])
-def post_2key(pkey, fkey, action, port):
-	print "Received request from " + str(port) 
-	ip = request.remote_addr #save requester's IP address
-	if (not checkAction(action)): #make sure requester specified a CRUD operation
-		data = {'error':'Specified protocol not a CRUD operation'}
-		return response(data, 403)
-	if (not checkPort(port)): #make sure requester's port is valid
-		data = {'error':'Sender port not in list of authorized ports'}
-		return response(data, 403)
-
-	# Construct the message to log
-	message = str(datetime.datetime.now().isoformat()) + " " + str(ip)
-	message += formatKey(pkey)
-	message += formatKey(fkey)
-	message += " []"
-	message += " []"
-	message += " " + str(action)
-
-	# Log the message
-	writeToLog(message)
-
-	# These actions meaningless to other MS, plus the Courses & Students DB disallow modifications to primary keys
-	#if (action != 'PUT' and action != 'GET'): 
-	#	notifyMS(port, message)
-
-	# Return the logged message to the requester
-	data = {'logged':message}
-	return response(data, 200)
+	#data = {'logged':message}
+	return response("GOTCHA!", 200)
 
 # POST message from MS telling integrator to delete a log message with a certain timestamp
 # TODO: problem, what do we do with the non-essential logs? the ones that don't affect the other DB

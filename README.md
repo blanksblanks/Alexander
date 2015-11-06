@@ -23,26 +23,29 @@ python api/integrator.py courses 9001 1 students 9002
 
 Example Tests for Students:
 ```
-# Get all students
-curl -X GET http://localhost:9002/students
+Add a student to the database:
+curl --data "firstName=Melanie&lastName=Hsu&uid=mlh2197&enrolledCourses=COMS4111&pastCourses=COMS4118" http://127.0.0.1:9002/students
 
-# Get one student
-curl -X GET http://localhost:9002/students/ac3680
+Get all info on all students:
+curl -X GET http://127.0.0.1:9002/students
 
-# Get one student's courses
-curl -X GET http://localhost:9002/students/ac3680/courses
+Get info about one student from the database: 
+curl -X GET http://127.0.0.1:9002/students/mlh2197
 
-# Post a new student to the collection of students
-curl -X POST --data "first_name=Melanie&last_name=Hsu&uid=mlh2197" http://127.0.0.1:9002/students
+Add a class to a student’s schedule:
+curl --data "cid=COMS4156" http://127.0.0.1:9002/students/mlh2197/courses
 
-# Delete a student
-curl -X DELETE http://localhost:9002/students/ac3680
+Delete a class from a student’s schedule:
+curl -X DELETE http://127.0.0.1:9002/students/mlh2197/courses/COMS4156
 
-# Post course to student's collection of courses
-curl -X POST --data "cid=COMS6998" http://localhost:9002/students/ab3680/courses
+Get a student’s courses from the database: TRY IT AGAIN
+curl -X GET http://127.0.0.1:9002/students/mlh2197/courses
 
-# Delete course from student's list of courses
-curl -X DELETE http://localhost:9002/students/ac3680/courses/COMS1234
+Delete a student:
+curl -X DELETE http://127.0.0.1:9002/students/ac3680
+
+Update a student (non-primary key):
+curl -X PUT -d firstName=Princess -d lastName=Sally http://127.0.0.1:9002/students/mlh2197
 
 # As an example of how to interact with integrator directly (testing only, users should never talk to integrator)
 curl -X POST http://127.0.0.1:5000/9002/integrator/Steve_Jobs/DELETE
