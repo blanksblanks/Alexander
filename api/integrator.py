@@ -165,16 +165,32 @@ def post_key_POST_OR_DEL(primary_key):
 
 	# figure out who the sender was
 	sender = None
-	if (int(requester_port) == int(coursesPort)):
-		sender = 'course'
-	else:
-		for k, v in students.iteritems():
-			if int(requester_port) == int(v):
-				sender = 'student'
+	action = None
+	uid = None 
+	cid = None
+	oldRecord = None 
+	newRecord = None
+	port = None
 	print data
 	for k, v in data.iteritems():
-		print "key: " + str(k)
-		print "value: " + str(v)
+		if k == 'port':
+			port = int(v)
+			if (port == int(coursesPort)):
+				sender = 'course'
+			else:
+				for k, v in students.iteritems():
+					if port == int(v):
+						sender = 'student'
+		elif k == 'verb':
+			action = str(v)
+		elif k == 'uid':
+			uid = str(v)
+		elif k == 'cid':
+			cid = str(v)
+		elif k == 'v1':
+			oldRecord = v
+		elif k == 'v2':
+			newRecord = v
 
 	# figure out the sender's action
 
