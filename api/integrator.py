@@ -187,6 +187,19 @@ def post_key_POST_OR_DEL(primary_key):
 				print "updated courses list: " + str(courses_list)
 		else: # record update
 			print "record update"
+			if sender == 'student':
+				# student added a class, tell courses MS
+				url = courses + "courses/" + cid + "/students"
+				data = {'uid':uid}
+				res = requests.post(url, data=data)
+				print url
+			else:
+				# courses added student to class, tell student MS
+				for k, v in students.iteritems():
+					url = k + "students/" + uid + "/courses"
+					data = {'cid':cid}
+					res = requests.post(url, data=data)
+ 					print url
 	elif action == 'PUT':
 		print 'PUT'
 	elif action == 'DELETE':

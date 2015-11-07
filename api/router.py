@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+    
 from flask import Flask
 from flask import Response
 from flask import stream_with_context
@@ -17,10 +17,12 @@ class RegexConverter(BaseConverter):
     def __init__(self, url_map, *items):
         super(RegexConverter, self).__init__(url_map)
         self.regex = items[0]
-
+                
 app.url_map.converters['regex'] = RegexConverter
 
-#returns a list of ports, or a list with only a "0" if the student's first letter is not a letter
+#Returns a list of ports determined by the first letter of the param
+#(Or a list with only a "0" if the uid's first character is not a letter)
+#This is used by all re-routes for Students except POST
 def getPort(param):
     with open('config.txt', 'rb') as handle:
         routingTable = pickle.loads(handle.read())
@@ -47,8 +49,9 @@ def getPort(param):
         portList.append(0)
         return portList
     return portList
-
-#Returns port as variable - not as list
+    
+#Returns the target port as single variable - not as list
+#This is only used by the student's POST
 def postPort(param):
     with open('config.txt', 'rb') as handle:
         routingTable = pickle.loads(handle.read())
@@ -63,82 +66,104 @@ def postPort(param):
         return SinglePort
     return SinglePort
 
-'''
-For courses
-@app.route("/students<regex('.*'):param>", methods = ['GET', 'POST', 'PUT', 'DELETE'])
-def studentsRoute(param):
+#Any URIs coming in with "/courses..." are re-routed in this function
+@app.route("/courses<regex('.*'):param>", methods = ['GET', 'POST', 'PUT', 'DELETE'])
+def coursesRoute(param):
     data = {}
+    
+    #A GET request is incoming
     if request.method == 'GET':
-        #ifparam[1]
-        req = requests.get("http://127.0.0.1:9002/students" + param, stream = True)
-        return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+            req = requests.get("http://127.0.0.1:9001/courses" + param, stream = True)
+            return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+            
+    #A POST request is incoming
     elif request.method == 'POST':
-        print "the magic letter is:", request.form['firstName'][0]
-        data = {"firstName": request.form['firstName'],
-        "lastName": request.form['lastName'],
-        "uid": request.form['uid'],
-        "email": request.form['email'],
-        "enrolledCourses": request.form['enrolledCourses'],
-        "pastCourses": request.form['pastCourses']}
-        req = requests.post("http://127.0.0.1:9002/students" + param, data=data)
+        for k,v in request.form.iteritems():
+            print k,v
+            data.update({k:v})
+        req = requests.post("http://127.0.0.1:9001/courses" + param, data=data)
         return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        
+    #A PUT request is incoming
     elif request.method == 'PUT':
         for k,v in request.form.iteritems():
             print k,v
             data.update({k:v})
-        req = requests.put("http://127.0.0.1:9002/students" + param, data=data)
+        req = requests.put("http://127.0.0.1:9001/courses" + param, data=data)
         return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        
+    #A DELETE request is incoming
     elif request.method == 'DELETE':
-        req = requests.delete("http://127.0.0.1:9002/students" + param, stream = True)
-        return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])'''
+        req = requests.delete("http://127.0.0.1:9001/courses" + param, stream = True)
+        return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
 
-
-
+        
+#Any URIs coming in with "/students..." are re-routed in this function
 @app.route("/students<regex('.*'):param>", methods = ['GET', 'POST', 'PUT', 'DELETE'])
 def studentsRoute(param):
+
+    #Get the list of ports relevant to the incoming
     portList = getPort(param)
-    print portList
-    if portList[0] == 0: # UID starts with a letter
+    if portList[0] == 0: # UID starts with a letter (invalid)
         return "Invalid UID", 400
+        
     data = {}
+    
+    #GET coming in
     if request.method == 'GET':
+    
+        #If there is just one Students MS
         if len(portList) == 1:
             req = requests.get("http://127.0.0.1:" + str(portList[0]) + "/students" + param, stream = True)
             return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+            
+        #If there are three Students MSs, the get must concatenate three responses
         if len(portList) == 3:
             req1 = requests.get("http://127.0.0.1:" + str(portList[0]) + "/students" + param, stream = True)
-            req2 = requests.get("http://127.0.0.1:" + str(portList[1]) + "/students" + param, stream = True) # REDO THIS IN A NICER WAY
+            req2 = requests.get("http://127.0.0.1:" + str(portList[1]) + "/students" + param, stream = True)
             req3 = requests.get("http://127.0.0.1:" + str(portList[2]) + "/students" + param, stream = True)
-            return req1.text + req2.text + req3.text # SEE IF WAY TO DO THIS BETTER
+            
+            #Concatenate three responses together, separated by ", "
+            responseText = req1.text[:-1]
+            if len(req2.text) != 2:
+                responseText += ", "
+            responseText += req2.text[1:-1]
+            if len(req3.text) != 2:
+                responseText += ", "
+            responseText += req3.text[1:]
+            return responseText
+            
+    #POST coming in
     elif request.method == 'POST':
-        data = {"firstName": request.form['firstName'],
-        "lastName": request.form['lastName'],
-        "uid": request.form['uid'],
-        "email": request.form['email'],
-        "enrolledCourses": request.form['enrolledCourses'], #Make this configurable, see data.update below
-        "pastCourses": request.form['pastCourses']}
-
-        print request.form['uid']
+    
+        #Populate the data dictionary with the key value pairs coming in from the body
+        for k,v in request.form.iteritems():
+            print k,v
+            data.update({k:v})
+            
+        #Get the single target port by finding what letter the UID starts with
         singlePort = postPort(request.form['uid'])
-
-        if singlePort == 0: # UID !starts with a letter
+        if singlePort == 0: # The UID did not start with a letter
             return "Invalid UID", 400
-
-        print "--------PORT AFTER IS", singlePort
+            
         req = requests.post("http://127.0.0.1:" + str(singlePort) + "/students" + param, data=data)
         return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        
+    #PUT coming in
     elif request.method == 'PUT':
         for k,v in request.form.iteritems():
             print k,v
             data.update({k:v})
-        req = requests.put("http://127.0.0.1:9002/students" + param, data=data)
+        req = requests.put("http://127.0.0.1:" + str(portList[0]) + "/students" + param, data=data)
         return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        
+    #DELETE coming in
     elif request.method == 'DELETE':
-        req = requests.delete("http://127.0.0.1:9002/students" + param, stream = True)
+        req = requests.delete("http://127.0.0.1:" + str(portList[0]) + "/students" + param, stream = True)
         return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
 
 if __name__ == '__main__':
     app.run(
         debug = True,
-        port = 1235
+        port = 1234
     )
