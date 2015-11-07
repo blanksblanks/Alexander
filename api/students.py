@@ -195,7 +195,7 @@ def post_event(uid, payload):
 # Looks for forward: false tag from integrator requests
 def do_not_forward():
     data = form_or_json()
-    return true if 'forward' in data else false
+    return True if 'forward' in data else False
 
 # Returns a record given a UID (uni)
 def get_record(uid):

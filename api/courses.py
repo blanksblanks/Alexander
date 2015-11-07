@@ -179,7 +179,7 @@ def not_found(error=None):
 
 def do_not_forward():
     data = form_or_json()
-    return true if 'forward' in data else false
+    return True if 'forward' in data else False
 
 # Returns data whether from request.form or request.data
 def form_or_json():
