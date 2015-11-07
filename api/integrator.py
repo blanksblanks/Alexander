@@ -26,9 +26,10 @@ app = Flask(__name__)
 #ex. python integrator.py http://localhost:9001 9001 1 http://localhost:9002 9002
 
 courses = None
-coursesPort = None
+courses_port = None
+courses_list = []
+students_list = []
 students = {} # dictionary of studentsURL: studentsPort
-acceptedOps = ['POST', 'GET', 'PUT', 'DELETE']
 
 def main(argv):
 	if (len(argv) < 5):
@@ -36,44 +37,44 @@ def main(argv):
 		sys.exit(1)
 
 	ports = []
-	expectedUniquePorts = 0
+	expected_unique_ports = 0
 
 	global courses
 	courses = argv[0]
 
-	global coursesPort
-	coursesPort = argv[1]
+	global courses_port
+	courses_port = argv[1]
 
-	# Check to make sure coursesPort is an integer and a valid port
-	if (not isinstance(int(coursesPort), int) or int(coursesPort) < 1024): 
+	# Check to make sure courses_port is an integer and a valid port
+	if (not isinstance(int(courses_port), int) or int(courses_port) < 1024): 
 		print "argv[1] must be a valid port"
 		sys.exit(1)
 
-	ports.append(coursesPort)
-	expectedUniquePorts += 1
+	ports.append(courses_port)
+	expected_unique_ports += 1
 
-	numberOfPartitions = int(argv[2])
-	argNumber = 3
+	number_of_partitions = int(argv[2])
+	arg_number = 3
 
 	global students
-	for i in range(numberOfPartitions):
-		if (not isinstance(int(argv[argNumber+1]), int) or int(argv[argNumber+1]) < 1024):
-			print "argv[" + str(argNumber+1) + "] must be a valid port"
+	for i in range(number_of_partitions):
+		if (not isinstance(int(argv[arg_number+1]), int) or int(argv[arg_number+1]) < 1024):
+			print "argv[" + str(arg_number+1) + "] must be a valid port"
 			sys.exit(1)
-		students[argv[argNumber]] = argv[argNumber+1]
-		ports.append(argv[argNumber+1])
-		argNumber += 2
-		expectedUniquePorts += 1
+		students[argv[arg_number]] = argv[arg_number+1]
+		ports.append(argv[arg_number+1])
+		arg_number += 2
+		expected_unique_ports += 1
 
 	# ensure that the ports are all distinct!
-	if (len(set(ports)) < expectedUniquePorts):
+	if (len(set(ports)) < expected_unique_ports):
 		print "Each port number must be distinct (including partitions)."
 		sys.exit(1)
 	app.run()
 
 # Check that the requester's port belongs to courses or one of the students micro-services
-def checkPort(port):
-	if (int(port) == int(coursesPort)):
+def check_port(port):
+	if (int(port) == int(courses_port)):
 		return True
 	for k, v in students.iteritems():
 		if int(port) == int(v):
@@ -88,70 +89,46 @@ def response(data, code):
 
 # Log message format: <timestamp> <requester IP> [<pkeys>] [<fkeys>] [<original non-primary key>] [<changed non-primary key>] <CRUD operation>
 # Leave any given array as empty parentheses if there aren't any
-def writeToLog(message):
+def write_to_log(message):
 	with open("log.txt", "a") as myfile:
 		myfile.write(message + "\n")
 
-def deleteFromLog(timestamp):
+def delete_from_log(timestamp):
 	# Read all the lines
 	f = open("log.txt", "r")
 	lines = f.readlines()
 	f.close()
 
 	# Look for the line to delete
-	lineNumber = 1
+	line_number = 1
 	for l in lines:
 		if timestamp in l:
 			break
-		lineNumber += 1
+		line_number += 1
 
 	# Write all lines except for the one to delete into a new file
-	lineCount = 1
+	line_count = 1
 	message = ""
 	n = open("newlog.txt", "a")
 	for line in lines:
-		if lineCount != lineNumber:
+		if line_count != line_number:
 			n.write(line)
 		else:
 			message += line
-		lineCount += 1
+		line_count += 1
 	n.close()
 	if (len(message) > 0):
 		os.rename("newlog.txt", "log.txt")
 	return message
 
 # Method to help split the key and prepare it in the correct format for the log
-def formatKey(key):
+def format_key(key):
 	substring = " ["
 	key = key.replace("_", " ")
 	for i in range(len(key)):
 		substring += key[i]
 	substring += "]"
 	return substring
-
-# Call the other micro-services
-def notifyMS(requesterPort, message):
-	print "Port: " + requesterPort
-	print "Course: " + coursesPort
-	sender = None
-	# determine if students or courses was the sender
-	if (int(requesterPort) == int(coursesPort)):
-		sender = 'course'
-	else:
-		for k, v in students.iteritems():
-			if int(requesterPort) == int(v):
-				sender = 'student'
-
-	# determine who to send request to based on the sender
-	if (sender == 'course'): # broadcast to students
-		for k, v in students.iteritems():
-			print "CONTACTED STUDENTS"
-			data = {'important change':message}
-			#r = requests.post(k, data = json.dumps(data))
-	else:
-		print "CONTACTED COURSES"
-		data = {'important change':message}
-		#r = requests.post(courses, data = json.dumps(data))
 
 # POST with primary key only (primary keys are cid or uid)
 # The integrator will inform the other MS about these changes
@@ -168,14 +145,14 @@ def post_key_POST_OR_DEL(primary_key):
 	action = None
 	uid = None 
 	cid = None
-	oldRecord = None 
-	newRecord = None
+	old_record = None 
+	new_record = None
 	port = None
 	print data
 	for k, v in data.iteritems():
 		if k == 'port':
 			port = int(v)
-			if (port == int(coursesPort)):
+			if (port == int(courses_port)):
 				sender = 'course'
 			else:
 				for k, v in students.iteritems():
@@ -188,25 +165,48 @@ def post_key_POST_OR_DEL(primary_key):
 		elif k == 'cid':
 			cid = str(v)
 		elif k == 'v1':
-			oldRecord = v
+			old_record = v
 		elif k == 'v2':
-			newRecord = v
+			new_record = v
+	print "old record: " + old_record
+	print "new record: " + new_record
 
 	# figure out the sender's action
+	if action == 'POST':
+		if len(old_record) < 1: # record creation, don't need to tell other MS
+			print "new record creation"
+			if sender == 'student':
+				global students_list
+				students_list.append(uid)
+				print "student added: " + uid
+				print "updated students list: " + str(students_list)
+			else:
+				global courses_list # add to the list of existing courses
+				courses_list.append(cid)
+				print "course added: " + cid
+				print "updated courses list: " + str(courses_list)
+		else: # record update
+			print "record update"
+	elif action == 'PUT':
+		print 'PUT'
+	elif action == 'DELETE':
+		if sender == 'student': # tell courses we are deleting the student
+			url = courses + cid + "/students/" + uid 
+			#/courses/<cid>/students/<uid>
+			#url = courses + "courses/" + cid
+			print url
+			#res = requests.post()
+		else: # tell each 
+			for k, v in students.iteritems():
+				print "SEND SEND SEND!"
 
 	data = {'received':request.data}
 	return response(data, 200)
 """
-for k,v in request.form.iteritems():
-        if k == "uid":
-            return "You can't update a student's UID", 409
-    v1 = find_user(uid)
-    for k,v in request.form.iteritems():
-        posts.update({"uid":uid},{"$set":{k:v}})
-    data = json.dumps({"port": port_num, "v1" : v1, "v2": find_user(uid), "cid": None})
-    post_event(uid, data, PUT)
-    return "Updates made successfully", 200
-			sender = 'student'
+    url = 'http://127.0.0.1:5000/integrator/' + uid
+    print "POST to integrator: " + url
+    res = requests.post(url, data=payload)
+    print 'response from server:', res.text
 """
 
 if __name__ == '__main__':
