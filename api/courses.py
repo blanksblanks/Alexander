@@ -177,6 +177,10 @@ def not_found(error=None):
     resp.status_code = 404
     return resp
 
+def do_not_forward():
+    data = form_or_json()
+    return true if 'forward' in data else false
+
 def form_or_json():
     data = request.form
     return data if data is not None else request.data
@@ -200,6 +204,8 @@ def check_student(cid, uid):
 
 # Post course change event to integrator
 def post_event(cid, payload):
+    if do_not_forward():
+        return
     url = 'http://127.0.0.1:5000/integrator/' + cid
     print "POST to integrator: " + url
     res = requests.post(url, data=payload)

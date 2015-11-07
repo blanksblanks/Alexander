@@ -185,10 +185,16 @@ def not_found(error=None):
 
 # Post student change event (non-GET requests) to integrator
 def post_event(uid, payload):
+    if do_not_forward():
+        return
     url = 'http://127.0.0.1:5000/integrator/' + uid
     print "POST to integrator: " + url
     res = requests.post(url, data=payload)
     print 'response from server:', res.text
+
+def do_not_forward():
+    data = form_or_json()
+    return true if 'forward' in data else false
 
 # Returns a record given a UID (uni)
 def get_record(uid):
