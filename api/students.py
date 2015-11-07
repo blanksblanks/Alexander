@@ -192,6 +192,7 @@ def post_event(uid, payload):
     res = requests.post(url, data=payload)
     print 'response from server:', res.text
 
+# Looks for forward: false tag from integrator requests
 def do_not_forward():
     data = form_or_json()
     return true if 'forward' in data else false
@@ -199,20 +200,14 @@ def do_not_forward():
 # Returns a record given a UID (uni)
 def get_record(uid):
     record = posts.find_one({"uid": uid})
-    if record:
-        return record
-    else:
-        return 0
+    return record if record else 0
 
 # Finds a course in a record given a UID (student identifier) and a CID (course identifier)
 def check_course(uid, cid):
     record = posts.find_one({"uid": uid, "cid_list": cid})
-    print record
-    if record:
-        return record
-    else:
-        return 0
+    return record if record else 0
 
+# Returns data whether from request.form or request.data
 def form_or_json():
     data = request.form
     return data if data is not None else request.data
