@@ -193,7 +193,7 @@ def post_key_POST_OR_DEL(primary_key):
 					print "Students added " + str(uid) + " to class " + str(cid)
 					url = courses + "courses/" + cid + "/students"
 					print "SENT URL: " + url
-					res = requests.post(url, json={'uid':uid})
+					res = requests.post(url, json={'uid':uid, 'forward':false})
 					print "Notified courses that " + str(uid) + " added class " + str(cid)
 					print "Response from courses: " + res.text
 				else: # that class does not exist, undo student's action
