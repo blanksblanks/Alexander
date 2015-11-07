@@ -189,16 +189,26 @@ def post_key_POST_OR_DEL(primary_key):
 			print "record update"
 			if sender == 'student':
 				# student added a class, tell courses MS
-				url = courses + "courses/" + cid + "/students"
-				data = {'uid':uid}
-				res = requests.post(url, data=data)
-				print url
+				if (cid in courses_list):
+					print "Students added " + str(uid) + " to class " + str(cid)
+					url = courses + "courses/" + cid + "/students"
+					print "SENT URL: " + url
+					data = str({'uid':uid})
+					res = requests.post(url, json=data)
+					print "Notified courses that " + str(uid) + " added class " + str(cid)
+					print "Response from courses: " + res.text
+				else: # that class does not exist, undo student's action
+					print "Student " + str(uid) + " cannot join nonexistent class " + str(cid)
+					for k, v in students.iteritems():
+						url = k + "students/" + uid + "/courses/" + cid
+						res = requests.delete(url)
+					print "Class " + str(cid) + " does not exist, remove " + str(uid) + " from class"
 			else:
 				# courses added student to class, tell student MS
 				for k, v in students.iteritems():
 					url = k + "students/" + uid + "/courses"
 					data = {'cid':cid}
-					res = requests.post(url, data=data)
+					res = requests.post(url, json=data)
  					print url
 	elif action == 'PUT':
 		print 'PUT'
