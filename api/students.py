@@ -1,6 +1,7 @@
 import datetime
 import pprint
 import requests
+import sys
 
 from bson.json_util import dumps
 
@@ -12,22 +13,31 @@ from flask import Response
 from flask import jsonify
 app = Flask(__name__)
 
-# Import and initialize MongoDB
-import pymongo
-from pymongo import MongoClient
-client = MongoClient()
-db = client.test_database
-collection = db.test_collection
-posts = db.posts # DO NOT DELETE THIS LINE!!!
-collection.remove({}) # start clear
-posts.remove() # start clear
-
 # Globals
-port_num = int("9002")
 GET = 'GET'
 POST = 'POST'
 PUT = 'PUT'
 DELETE = 'DELETE'
+try:
+    port_num = int(sys.argv[1]) # The port number to run on is the first argument
+except:
+    port_num = int("9002")
+
+try:
+    DBInstance = sys.argv[2] # The database instance to use is the second argument
+except:
+    DBInstance = 0
+
+# Import and initialize MongoDB
+import pymongo
+from pymongo import MongoClient
+client = MongoClient()
+db = client['databaseS' + str(DBInstance)]
+#db = client.test_database
+collection = db.test_collection
+posts = db.posts
+collection.remove({}) # start clear
+posts.remove() # start clear
 
 # Prepopulate DB when students.py is restarted by stat if on debug mode
 post = {"first_name": "Agustin",
