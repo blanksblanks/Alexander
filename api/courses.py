@@ -179,8 +179,9 @@ def not_found(error=None):
 
 def do_not_forward():
     data = form_or_json()
-    return true if 'forward' is in data
+    return true if 'forward' in data else false
 
+# Returns data whether from request.form or request.data
 def form_or_json():
     data = request.form
     return data if data is not None else request.data
@@ -188,19 +189,12 @@ def form_or_json():
 # Returns a record given a CID (course identifier)
 def get_record(cid):
     record = posts.find_one({"cid": cid})
-    if record:
-        return record
-    else:
-        return 0
+    return record if record else 0
 
 # Finds a student in a record given a CID (course identifier) and UID (student identifier)
 def check_student(cid, uid):
     record = posts.find_one({"cid": cid, "uid_list": uid})
-    print record
-    if record:
-        return record
-    else:
-        return 0
+    return record if record else 0
 
 # Post course change event to integrator
 def post_event(cid, payload):
