@@ -148,8 +148,9 @@ def get_courses_students(cid):
 
 
 #Add student to course.
-@app.route('/courses/<cid>/students/<uid>', methods=[PUT])
-def add_student(cid, uid):
+@app.route('/courses/<cid>/students', methods=[POST])
+def add_student(cid):
+	uid = request.form['uid']
 	record = get_record(cid)
 	if record:
 		if check_student(cid, uid):
@@ -157,7 +158,7 @@ def add_student(cid, uid):
 			return message, 409
 		posts.update({"cid":cid},{"$push":{"uid_list": uid}})
 		message = "Added student(" + uid + ") to course(" + cid + ")\n"
-		postEvent(cid, uid, PUT)
+		postEvent(cid, uid, POST)
 		return message, 200
 	else:
 		return not_found()
