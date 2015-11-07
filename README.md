@@ -17,7 +17,7 @@ Start Program:
 ```
 mongod --dbpath ~/Desktop/Alexander/api/data/db
 python api/courses.py
-python api/students.py
+python api/students.py [PORT_NUMBER]
 python api/integrator.py courses 9001 1 students 9002
 ```
 
@@ -64,7 +64,7 @@ curl -X POST http://127.0.0.1:5000/9002/integrator/Steve_Jobs/DELETE
 | Courses | 9001 |
 | Students | 9002 |
 
-* Additional students microservice partitions run on 9003, 9004, etc.
+* Additional students microservice partitions run on 9003, 9004, and 9005.
 
 Example Tests for Courses:
 ```
