@@ -174,3 +174,29 @@ Integrator receives:
 {u'uid': u'mlh2197', u'cid': u'COMS4118', u'v1': u'{"_id": {"$oid": "563d65b006a1a49e7a1be667"}, "uid_list": ["mlh2197", "nb2406", "ca3680"], "cid": "COMS4118"}', u'v2': u'{"_id": {"$oid": "563d65b006a1a49e7a1be667"}, "uid_list": ["nb2406", "ca3680"], "cid": "COMS4118"}', u'verb': u'DELETE', u'port': 9001}
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+Partitioning:
+To test the partitioning out, you can do as follows:
+1. python setupDBs.py
+This clears all Student databases an puts 9 posts into it (three in each alphabetical group, as we will see below)
+
+2. You should see a "config" file in the api directory (if you do not, you can use the script: SetupTools/createConfig.py to create it).
+
+3. You can run the program normally at this point, executing "python router.py", "mongod", "python students.py", "python integrator.py", and "python courses.py"
+
+4. At this point, terminate all executed processes, starting from the router (disables incoming requests). We will now partition the Students microservice.
+
+5. Delete "config"
+
+6. Use the script: SetupTools/createConfig2.py to create "config2"
+
+7. Move "config2" to the api folder and rename it to "config"
+
+8. Run partition.py
+
+3. You can run the program at this point, executing "python router.py", "mongod", "python integrator.py", and "python courses.py".
+The three students.py microservices are run as follows:
+"python students.py 9003"
+"python students.py 9004"
+"python students.py 9005"
