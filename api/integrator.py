@@ -193,7 +193,7 @@ def post_key_POST_OR_DEL(primary_key):
 					print "Students added " + str(uid) + " to class " + str(cid)
 					url = courses + "courses/" + cid + "/students"
 					print "SENT URL: " + url
-					data = json.dumps({"uid":uid, "forward":false})
+					data = json.dumps({"uid":uid, "forward":"False"})
 					res = requests.post(url, data=data)
 					#print "Notified courses that " + str(uid) + " added class " + str(cid)
 					print "Response from courses: " + res.text
