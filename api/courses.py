@@ -188,8 +188,7 @@ def remove_student(cid, uid):
     #uid_list.append(uid)
 
 #Update course info.
-# PUT .../students/<uid> - Update student field
-@app.route('/students/<uid>', methods=[PUT])
+@app.route('/courses/<cid>', methods=[PUT])
 def update_course(cid):
     for k,v in request.form.iteritems():
         if k == "cid":

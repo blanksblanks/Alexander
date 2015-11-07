@@ -68,8 +68,11 @@ curl -X POST http://127.0.0.1:5000/9002/integrator/Steve_Jobs/DELETE
 
 Example Tests for Courses:
 ```
-# Add a course to the database:
-curl -d "cid=COMS6998" http://127.0.0.1:9001/courses
+# Add a course
+curl -X POST --data "cid=COMS6998&uid_list=Nina,Melanie,Agustin,Bailey" http://127.0.0.1:9001/courses
+
+# Update a course
+curl -X PUT --data "uid_list=Ninarrrrrr,Melanie,Agustin,Bailey" http://127.0.0.1:9001/courses/COMS6998
 
 # Get all courses
 curl -X GET http://localhost:9001/courses
