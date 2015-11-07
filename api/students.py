@@ -75,13 +75,12 @@ def get_student_courses(uid):
         return not_found()
 
 # POST .../students - Create a new student
-# TODO: return appropriate error when uid is not provided (currently 400 which indicates server error)
+# Students are forbidden to enroll in class when they are just created
 @app.route('/students', methods = [POST])
 def create_new_student():
-    print "Called create_new_student"
-    print request.form
+    if 'uid' not in request.form:
+        return "No uid provided in new student data\n", 409
     uid = request.form['uid']
-    print "uid: " + uid
     if get_record(uid):
         return "Resource already exists\n", 409
     posts.insert({"uid":uid})
@@ -89,9 +88,7 @@ def create_new_student():
         if k == "uid":
             continue
         elif k == "cid_list":
-            # Add each course in a comma-delimited string to cid_list
-            for cid in v.split(','):
-                posts.update({"uid":uid},{"$push":{"cid_list": cid}})
+            return "You can't create a student with a pre-enrolled list of courses\n", 409
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
     print posts
@@ -103,7 +100,6 @@ def create_new_student():
 # PUT .../students/<uid> - Update student field
 @app.route('/students/<uid>', methods=[PUT])
 def update_student(uid):
-    print "now we are updating the following uid: ", uid
     for k,v in request.form.iteritems():
         if k == "uid":
             return "You can't update a student's UID", 409
