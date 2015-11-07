@@ -101,7 +101,7 @@ def create_new_student():
             posts.update({"uid":uid},{"$set":{k:v}})
     print posts
     payload = json.dumps({"port": port_num, "v1": "", "v2": get_student(uid), "uid": uid, "cid": "", "verb": POST})
-    post_event(uid, data)
+    post_event(uid, payload)
     message = "New student(" + uid + ") created\n"
     return message, 201
 
@@ -120,7 +120,7 @@ def update_student(uid):
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
     payload = json.dumps({"port": port_num, "v1": v1, "v2": get_student(uid), "uid": uid, "cid": "", "verb": PUT})
-    post_event(uid, data)
+    post_event(uid, payload)
     return "Updates made successfully", 200
 
 #Add one course to student.
@@ -137,7 +137,7 @@ def add_course(uid):
         posts.update({"uid":uid},{"$push":{"cid_list": cid}})
         message = "Added course(" + cid + ") to student(" + uid + ")\n"
         payload = json.dumps({"port": port_num, "v1": v1, "v2": get_student(uid), "uid": uid, "cid": cid, "verb": POST})
-        post_event(uid, data)
+        post_event(uid, payload)
         return message, 200
     else:
         return not_found()
@@ -154,7 +154,7 @@ def remove_course(uid, cid):
         posts.update({"uid":uid},{"$pull":{"cid_list": cid}})
         message = "Removed course(" + cid + ") from student(" + uid + ")\n"
         payload = json.dumps({"port": port_num, "v1": v1, "v2": get_student(uid), "uid": uid, "cid": cid, "verb": DELETE})
-        post_event(uid, data)
+        post_event(uid, payload)
         return message, 200
     else:
         return not_found()
@@ -167,7 +167,7 @@ def delete_student(uid):
         v1 = get_student(uid)
         posts.remove({"uid":uid})
         payload = json.dumps({"port": port_num, "v1": v1, "v2": "", "uid": uid, "cid": "", "verb": DELETE})
-        post_event(uid, data)
+        post_event(uid, payload)
         return "Student deleted successfully", 200
     else:
         return "Not Found", 404

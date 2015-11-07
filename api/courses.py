@@ -76,7 +76,7 @@ def add_student(cid):
         posts.update({"cid":cid},{"$push":{"uid_list": uid}})
         message = "Added student(" + uid + ") to course(" + cid + ")\n"
         payload = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": uid, "verb": POST})
-        post_event(cid, data)
+        post_event(cid, payload)
         return message, 200
     else:
         return not_found()
@@ -98,7 +98,7 @@ def remove_student(cid, uid):
         posts.update({"cid":cid},{"$pull":{"uid_list": uid}})
         message = "Removed student(" + uid + ") from course(" + cid + ")\n"
         payload = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": uid, "verb": DELETE})
-        post_event(cid, data)
+        post_event(cid, payload)
         return message, 200
     else:
         return not_found()
@@ -121,7 +121,7 @@ def update_course(cid):
         else:
             posts.update({"cid":cid},{"$set":{k:v}})
     payload = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": "", "verb": PUT})
-    post_event(cid, data)
+    post_event(cid, payload)
     return "Updates made successfully", 200
 
 #Add course to database.
@@ -145,7 +145,7 @@ def add_course():
             posts.update({"uid":uid},{"$set":{k:v}})
     payload = json.dumps({"port": port_num, "v1" : "", "v2": get_course(cid), "cid": cid, "uid": "", "verb": POST})
     message = "Course(" + cid + ") added\n"
-    post_event(cid, data)
+    post_event(cid, payload)
     return message, 200
     #uid_list = posts.find({"cid": cid})
     #uid_list.append(uid)
@@ -177,9 +177,10 @@ def not_found(error=None):
     resp.status_code = 404
     return resp
 
+# Looks for forward: false tag from integrator requests
 def do_not_forward():
     data = form_or_json()
-    return True if 'forward' in data else False
+    return true if 'forward' in data else false
 
 # Returns data whether from request.form or request.data
 def form_or_json():
