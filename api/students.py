@@ -20,12 +20,9 @@ PUT = 'PUT'
 DELETE = 'DELETE'
 try:
     port_num = int(sys.argv[1]) # The port number to run on is the first argument
+    DBInstance = int(sys.argv[1])
 except:
     port_num = int("9002")
-
-try:
-    DBInstance = sys.argv[2] # The database instance to use is the second argument
-except:
     DBInstance = 0
 
 # Import and initialize MongoDB
