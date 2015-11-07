@@ -156,7 +156,7 @@ def add_student(cid):
         v1 = get_course(cid)
         posts.update({"cid":cid},{"$push":{"uid_list": uid}})
         message = "Added student(" + uid + ") to course(" + cid + ")\n"
-        data = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "uid": uid, "verb": POST})
+        data = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": uid, "verb": POST})
         post_event(cid, data)
         return message, 200
     else:
@@ -178,7 +178,7 @@ def remove_student(cid, uid):
         v1 = get_course(cid)
         posts.update({"cid":cid},{"$pull":{"uid_list": uid}})
         message = "Removed student(" + uid + ") from course(" + cid + ")\n"
-        data = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "uid": uid, "verb": DELETE})
+        data = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": uid, "verb": DELETE})
         post_event(cid, data)
         return message, 200
     else:
@@ -201,7 +201,7 @@ def update_course(cid):
                 posts.update({"cid":cid},{"$push":{"uid_list": uid}})
         else:
             posts.update({"cid":cid},{"$set":{k:v}})
-    data = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "uid": "", "verb": PUT})
+    data = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": "", "verb": PUT})
     post_event(cid, data)
     return "Updates made successfully", 200
 
@@ -223,7 +223,7 @@ def add_course():
                 posts.update({"cid":cid},{"$push":{"uid_list": uid}})
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
-    data = json.dumps({"port": port_num, "v1" : "", "v2": get_course(cid), "uid": "", "verb": POST})
+    data = json.dumps({"port": port_num, "v1" : "", "v2": get_course(cid), "cid": cid, "uid": "", "verb": POST})
     message = "Course(" + cid + ") added\n"
     post_event(cid, data)
     return message, 200
@@ -239,7 +239,7 @@ def remove_course(cid):
     if record:
         v1 = get_course(cid)
         posts.remove({"cid":cid})
-        data = json.dumps({"port": port_num, "v1" : v1, "v2": "", "uid": "", "verb": DELETE})
+        data = json.dumps({"port": port_num, "v1" : v1, "v2": "", "cid": cid, "uid": "", "verb": DELETE})
         message = "Course(" + cid + ") removed\n"
         post_event(cid, DELETE)
         return message, 200
