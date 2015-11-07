@@ -38,7 +38,7 @@ curl -X POST --data "cid=COMS4156" http://127.0.0.1:9002/students/mlh2197/course
 Delete a class from a student's schedule:
 curl -X DELETE http://127.0.0.1:9002/students/mlh2197/courses/COMS4156
 
-Get a student's courses from the database: TRY IT AGAIN
+Get a student's courses from the database:
 curl -X GET http://127.0.0.1:9002/students/mlh2197/courses
 
 Delete a student:
@@ -84,13 +84,14 @@ curl -X GET http://localhost:9001/courses/COMS6998/students
 curl -X DELETE http://127.0.0.1:9001/courses/COMS6998
 
 # Add a student to the course:
-curl -X PUT http://127.0.0.1:9001/courses/COMS6998/students/nb2406
+curl -X POST --data "uid=nb2406" http://127.0.0.1:9001/courses/COMS6998/students
 
 # Remove a student from the course:
 curl -X DELETE http://127.0.0.1:9001/courses/COMS6998/students/nb2406
 ```
 
 All cases of students calling integrator:
+```
 Integrator posts:
 
 Create student:
@@ -98,9 +99,9 @@ curl --data "firstName=Melanie&lastName=Hsu&uid=mlh2197&enrolledCourses=COMS4111
 
 POST to integrator: http://127.0.0.1:5000/integrator/mlh2197/POST
 
-Integrator receives: 
+Integrator receives:
 {"cid": null, "port": 9002, "v1": null, "v2": "{\"uid\": \"mlh2197\", \"firstName\": \"Melanie\", \"lastName\": \"Hsu\", \"pastCourses\": \"COMS4118\", \"_id\": {\"$oid\": \"563d0283d007fd92b2be962b\"}, \"enrolledCourses\": \"COMS4111\"}"}
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Update student:
 curl -X PUT -d firstName=Princess -d lastName=Sally http://127.0.0.1:9002/students/mlh2197
 
@@ -132,4 +133,4 @@ POST to integrator: http://127.0.0.1:5000/integrator/ac3680/DELETE
 
 Integrator receives:
  {"cid": null, "port": 9002, "v1": "{\"first_name\": \"Agustin\", \"last_name\": \"Chanfreau\", \"uid\": \"ac3680\", \"past_cid_list\": [\"COMS948\", \"COMS94\", \"COMS9841\"], \"cid_list\": [\"COMS123\", \"COMS1234\", \"COMS12345\"], \"_id\": {\"$oid\": \"563d027cd007fd92b2be9629\"}, \"email\": \"ac3680@columbia.edu\"}", "v2": null}
-
+ ```
