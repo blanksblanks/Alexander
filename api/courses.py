@@ -33,88 +33,6 @@ POST = 'POST'
 PUT = 'PUT'
 DELETE = 'DELETE'
 
-
-#cid = '4115'
-#uid = 'wvb2103'
-#posts.insert({"cid": cid, "uid_list": ['ml2138']})
-#uid_list = list(posts.find({"cid": cid}))
-#print uid_list
-#uid_list.append(uid)
-#posts.update({"cid":cid},{"$push":{"uid_list": uid}})
-#uid_list = list(posts.find({"cid": cid}))
-#print uid_list
-#print posts.find({"cid": cid})
-
-
-#print posts.find({"cid": cid})
-
-#posts = db.posts
-#cid = '4115'
-#uid = 'cd231'
-#uid_list = posts.find()
-#uid_list.append(uid)
-#print uid_list
-#print posts.find({"cid": cid})
-
-#cid1 = '4115'
-#cid2 = '4111'
-#uid1 = 'wvb2103'
-#uid2 = 'mlh2198'
-#add_course(cid1)
-#add_student(cid1, uid1)
-#add_course(cid2)
-#add_student(cid2, uid2)
-#uid_list1 = list(posts.find({"cid": cid1}))
-#print uid_list1
-#uid_list2 = list(posts.find({"cid": cid2}))
-#print uid_list2
-
-#def add_student(cid, uid):
-#    record = get_record(cid)
-#    if record:
-#        posts.update({"cid":cid},{"$push":{"uid_list": uid}})
-#    else:
-#        return not_found()
-
-#def add_course(cid):
-#    record = get_record(cid)
-#    if record:
-#        return
-#    else:
-#        posts.insert({"cid": cid, "uid_list": []})
-
-
-# Returns a record given a CID (course identifier)
-def get_record(cid):
-    record = posts.find_one({"cid": cid})
-    if record:
-        return record
-    else:
-        return 0
-
-
-# Finds a student in a record given a CID (course identifier) and UID (student identifier)
-def check_student(cid, uid):
-    record = posts.find_one({"cid": cid, "uid_list": uid})
-    print record
-    if record:
-        return record
-    else:
-        return 0
-
-
-# Handle nonexistent routes
-@app.errorhandler(404)
-def not_found(error=None):
-    message = {
-            'status': 404,
-            'message': 'Not Found: ' + request.url,
-    }
-    resp = jsonify(message)
-    resp.status_code = 404
-    return resp
-
-
 # GET .../courses - returns all information for all courses
 @app.route('/courses', methods = [GET])
 def all_courses():
@@ -147,7 +65,8 @@ def get_course_students(cid):
 #Add student to course.
 @app.route('/courses/<cid>/students', methods=[POST])
 def add_student(cid):
-    uid = request.form['uid']
+    data = form_or_json()
+    uid = data['uid']
     record = get_record(cid)
     if record:
         if check_student(cid, uid):
@@ -156,7 +75,7 @@ def add_student(cid):
         v1 = get_course(cid)
         posts.update({"cid":cid},{"$push":{"uid_list": uid}})
         message = "Added student(" + uid + ") to course(" + cid + ")\n"
-        data = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": uid, "verb": POST})
+        payload = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": uid, "verb": POST})
         post_event(cid, data)
         return message, 200
     else:
@@ -178,7 +97,7 @@ def remove_student(cid, uid):
         v1 = get_course(cid)
         posts.update({"cid":cid},{"$pull":{"uid_list": uid}})
         message = "Removed student(" + uid + ") from course(" + cid + ")\n"
-        data = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": uid, "verb": DELETE})
+        payload = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": uid, "verb": DELETE})
         post_event(cid, data)
         return message, 200
     else:
@@ -190,30 +109,32 @@ def remove_student(cid, uid):
 #Update course info.
 @app.route('/courses/<cid>', methods=[PUT])
 def update_course(cid):
-    for k,v in request.form.iteritems():
+    data = form_or_json()
+    for k,v in data.iteritems():
         if k == "cid":
             return "You can't update a course's CID", 409
     v1 = get_course(cid)
-    for k,v in request.form.iteritems():
+    for k,v in data.iteritems():
         if k == "uid_list":
             for uid in v.split(','):
                 posts.update({"cid":cid},{"$push":{"uid_list": uid}})
         else:
             posts.update({"cid":cid},{"$set":{k:v}})
-    data = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": "", "verb": PUT})
+    payload = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": "", "verb": PUT})
     post_event(cid, data)
     return "Updates made successfully", 200
 
 #Add course to database.
 @app.route('/courses', methods=[POST])
 def add_course():
-    cid = request.form['cid']
+    data = form_or_json()
+    cid = data['cid']
     record = get_record(cid)
     if record:
         message = "Course(" + cid + ") already exists\n"
         return message, 409
     posts.insert({"cid":cid})
-    for k,v in request.form.iteritems():
+    for k,v in data.iteritems():
         if k == "cid":
             continue
         elif k == "uid_list":
@@ -222,7 +143,7 @@ def add_course():
                 posts.update({"cid":cid},{"$push":{"uid_list": uid}})
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
-    data = json.dumps({"port": port_num, "v1" : "", "v2": get_course(cid), "cid": cid, "uid": "", "verb": POST})
+    payload = json.dumps({"port": port_num, "v1" : "", "v2": get_course(cid), "cid": cid, "uid": "", "verb": POST})
     message = "Course(" + cid + ") added\n"
     post_event(cid, data)
     return message, 200
@@ -238,16 +159,44 @@ def remove_course(cid):
     if record:
         v1 = get_course(cid)
         posts.remove({"cid":cid})
-        data = json.dumps({"port": port_num, "v1" : v1, "v2": "", "cid": cid, "uid": "", "verb": DELETE})
+        payload = json.dumps({"port": port_num, "v1" : v1, "v2": "", "cid": cid, "uid": "", "verb": DELETE})
         message = "Course(" + cid + ") removed\n"
         post_event(cid, DELETE)
         return message, 200
     else:
         return not_found()
-    #uid_list = posts.find({"cid": cid})
-    #uid_list.append(uid)
-    #print uid_list
-    #print posts.find({"cid": cid})
+
+# Handle nonexistent routes
+@app.errorhandler(404)
+def not_found(error=None):
+    message = {
+            'status': 404,
+            'message': 'Not Found: ' + request.url,
+    }
+    resp = jsonify(message)
+    resp.status_code = 404
+    return resp
+
+def form_or_json():
+    data = request.form
+    return data if data is not None else request.data
+
+# Returns a record given a CID (course identifier)
+def get_record(cid):
+    record = posts.find_one({"cid": cid})
+    if record:
+        return record
+    else:
+        return 0
+
+# Finds a student in a record given a CID (course identifier) and UID (student identifier)
+def check_student(cid, uid):
+    record = posts.find_one({"cid": cid, "uid_list": uid})
+    print record
+    if record:
+        return record
+    else:
+        return 0
 
 # Post course change event to integrator
 def post_event(cid, payload):
@@ -255,23 +204,6 @@ def post_event(cid, payload):
     print "POST to integrator: " + url
     res = requests.post(url, data=payload)
     print 'response from server:', res.text
-
-#http://127.0.0.1:5000/integrator/COMS4111-3/9001/DELETE
-
-#To test the methods
-#cid1 = '4115'
-#cid2 = '4111'
-#uid1 = 'wvb2103'
-#uid2 = 'mlh2198'
-#add_course(cid1)
-#add_student(cid1, uid1)
-#add_course(cid2)
-#add_student(cid2, uid2)
-#uid_list1 = list(posts.find({"cid": cid1}))
-#print uid_list1
-#uid_list2 = list(posts.find({"cid": cid2}))
-#print uid_list2
-
 
 if __name__ == '__main__':
     app.run(debug=True, port=port_num)
