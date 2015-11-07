@@ -137,3 +137,40 @@ POST to integrator: http://127.0.0.1:5000/integrator/ac3680/DELETE
 Integrator receives:
  {"cid": null, "port": 9002, "v1": "{\"first_name\": \"Agustin\", \"last_name\": \"Chanfreau\", \"uid\": \"ac3680\", \"past_cid_list\": [\"COMS948\", \"COMS94\", \"COMS9841\"], \"cid_list\": [\"COMS123\", \"COMS1234\", \"COMS12345\"], \"_id\": {\"$oid\": \"563d027cd007fd92b2be9629\"}, \"email\": \"ac3680@columbia.edu\"}", "v2": null}
  ```
+ 
+ All cases of courses calling integrator:
+ Integrator posts:
+
+Create class:
+curl --data "cid=COMS4118&uid_list=mlh2197" http://127.0.0.1:9001/courses
+
+Integrator receives: 
+{u'uid': u'', u'cid': u'COMS4118', u'v1': u'', u'v2': u'{"_id": {"$oid": "563d63cf06a1a49d98b0252a"}, "uid_list": ["mlh2197"], "cid": "COMS4118"}', u'verb': u'POST', u'port': 9001}
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Update class info:
+curl -X PUT http://127.0.0.1:9001/courses/COMS4118
+
+Integrator receives: 
+{u'uid': u'', u'cid': u'COMS4156', u'v1': u'{"_id": {"$oid": "563d66b106a1a49e7a1be668"}, "uid_list": ["mlh2197"], "cid": "COMS4156"}', u'v2': u'{"_id": {"$oid": "563d66b106a1a49e7a1be668"}, "uid_list": ["mlh2197"], "cid": "COMS4156"}', u'verb': u'PUT', u'port': 9001}
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Add student to class:
+curl --data "uid=nb2406" http://127.0.0.1:9001/courses/COMS4118/students
+
+Integrator receives: 
+{u'uid': u'nb2406', u'cid': u'COMS4118', u'v1': u'{"_id": {"$oid": "563d65b006a1a49e7a1be667"}, "uid_list": ["mlh2197"], "cid": "COMS4118"}', u'v2': u'{"_id": {"$oid": "563d65b006a1a49e7a1be667"}, "uid_list": ["mlh2197", "nb2406"], "cid": "COMS4118"}', u'verb': u'POST', u'port': 9001}
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Remove student from class:
+curl -X DELETE http://127.0.0.1:9001/courses/COMS4118/students/mlh2197
+
+Integrator receives: 
+{u'uid': u'mlh2197', u'cid': u'COMS4118', u'v1': u'{"_id": {"$oid": "563d65b006a1a49e7a1be667"}, "uid_list": ["mlh2197", "nb2406", "ca3680"], "cid": "COMS4118"}', u'v2': u'{"_id": {"$oid": "563d65b006a1a49e7a1be667"}, "uid_list": ["nb2406", "ca3680"], "cid": "COMS4118"}', u'verb': u'DELETE', u'port': 9001}
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Delete class:
+curl -X DELETE http://127.0.0.1:9001/courses/COMS4118
+
+Integrator receives: 
+{u'uid': u'mlh2197', u'cid': u'COMS4118', u'v1': u'{"_id": {"$oid": "563d65b006a1a49e7a1be667"}, "uid_list": ["mlh2197", "nb2406", "ca3680"], "cid": "COMS4118"}', u'v2': u'{"_id": {"$oid": "563d65b006a1a49e7a1be667"}, "uid_list": ["nb2406", "ca3680"], "cid": "COMS4118"}', u'verb': u'DELETE', u'port': 9001}
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
