@@ -1,4 +1,4 @@
-#Set courses port on 9001
+## Courses Microservice ##
 
 #Import mongodb for python
 import pymongo
@@ -92,6 +92,7 @@ def get_record(cid):
     else:
         return 0
 
+
 # Finds a student in a record given a CID (course identifier) and UID (student identifier)
 def check_student(cid, uid):
 	record = posts.find_one({"cid": cid, "uid_list": uid})
@@ -100,6 +101,7 @@ def check_student(cid, uid):
 		return record
 	else:
 		return 0
+
 
 # Handle nonexistent routes
 @app.errorhandler(404)
@@ -112,12 +114,14 @@ def not_found(error=None):
     resp.status_code = 404
     return resp
 
+
 # GET .../courses - returns all information for all courses
 @app.route('/courses', methods = [GET])
 def all_courses():
     r = posts.find() # r is a cursor
     l = list(r) # l is a list
     return dumps(l)
+
 
 # GET .../courses/<cid> - returns all information for specified course
 @app.route('/courses/<cid>', methods = [GET])
@@ -130,6 +134,7 @@ def get_course(cid):
     else:
         return not_found()
 
+
 # GET .../courses/<cid>/courses - returns students for specific course
 @app.route('/courses/<cid>/students', methods = [GET])
 def get_courses_students(cid):
@@ -140,6 +145,7 @@ def get_courses_students(cid):
         return dumps(record["uid_list"])
     else:
         return not_found()
+
 
 #Add student to course.
 @app.route('/courses/<cid>/students/<uid>', methods=[PUT])
@@ -180,10 +186,42 @@ def remove_student(cid, uid):
 	#uid_list.append(uid)
 
 
+#Update course info.
+@app.route('/courses/<cid>', methods=[PUT])
+def add_info(cid):
+	record = get_record(cid)
+	args = request.args
+	if record:
+		for key, value in args.items:
+			posts.update({"cid":cid},{"$push":{key: value}})
+			postEvent(cid, uid, PUT)
+
+		message = "Successfully added information\n"
+		return message, 200
+	else:
+		return not_found()
+
+
+#Update course info.
+@app.route('/courses/<cid>', methods=[DELETE])
+def remove_info(cid):
+	record = get_record(cid)
+	args = request.args
+	if record:
+		for key, value in args.items:
+			posts.update({"cid":cid},{"$pull":{key}})
+			postEvent(cid, uid, DELETE)
+
+		message = "Successfully removed information\n"
+		return message, 200
+	else:
+		return not_found()
+
+
 #Add course to database.
-@app.route('/courses', methods=[POST])
-def add_course():
-	cid = request.form['cid']
+@app.route('/courses/<cid>', methods=[POST])
+def add_course(cid):
+	#cid = request.form['cid']
 	record = get_record(cid)
 	if record:
 		message = "Course(" + cid + ") already exists\n"
