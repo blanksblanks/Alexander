@@ -82,17 +82,17 @@ def get_student_courses(uid):
         return not_found()
 
 # POST .../students - Create a new student
-# TODO: return appropriate error when uid is not provided (currently 400 which indicates server error)
 # Students are forbidden to enroll in class when they are just created
 @app.route('/students', methods = [POST])
 def create_new_student():
-    if 'uid' not in request.form:
+    data = form_or_json()
+    if 'uid' not in data:
         return "No uid provided in new student data\n", 409
-    uid = request.form['uid']
+    uid = data['uid']
     if get_record(uid):
         return "Resource already exists\n", 409
     posts.insert({"uid":uid})
-    for k,v in request.form.iteritems():
+    for k,v in data.iteritems():
         if k == "uid":
             continue
         elif k == "cid_list":
@@ -100,7 +100,7 @@ def create_new_student():
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
     print posts
-    data = json.dumps({"port": port_num, "v1": "", "v2": get_student(uid), "uid": uid, "cid": "", "verb": POST})
+    payload = json.dumps({"port": port_num, "v1": "", "v2": get_student(uid), "uid": uid, "cid": "", "verb": POST})
     post_event(uid, data)
     message = "New student(" + uid + ") created\n"
     return message, 201
@@ -108,24 +108,26 @@ def create_new_student():
 # PUT .../students/<uid> - Update student field
 @app.route('/students/<uid>', methods=[PUT])
 def update_student(uid):
-    for k,v in request.form.iteritems():
+    data = form_or_json()
+    for k,v in data.iteritems():
         if k == "uid":
             return "You can't update a student's UID", 409
     v1 = get_student(uid)
-    for k,v in request.form.iteritems():
+    for k,v in data.iteritems():
         if k == "cid_list":
             for cid in v.split(','):
                 posts.update({"uid":uid},{"$push":{"cid_list": cid}})
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
-    data = json.dumps({"port": port_num, "v1": v1, "v2": get_student(uid), "uid": uid, "cid": "", "verb": PUT})
+    payload = json.dumps({"port": port_num, "v1": v1, "v2": get_student(uid), "uid": uid, "cid": "", "verb": PUT})
     post_event(uid, data)
     return "Updates made successfully", 200
 
 #Add one course to student.
 @app.route('/students/<uid>/courses', methods=[POST])
 def add_course(uid):
-    cid = request.form['cid']
+    data = form_or_json()
+    cid = data['cid']
     record = get_record(uid)
     if record:
         if check_course(uid, cid):
@@ -134,7 +136,7 @@ def add_course(uid):
         v1 = get_student(uid)
         posts.update({"uid":uid},{"$push":{"cid_list": cid}})
         message = "Added course(" + cid + ") to student(" + uid + ")\n"
-        data = json.dumps({"port": port_num, "v1": v1, "v2": get_student(uid), "uid": uid, "cid": cid, "verb": POST})
+        payload = json.dumps({"port": port_num, "v1": v1, "v2": get_student(uid), "uid": uid, "cid": cid, "verb": POST})
         post_event(uid, data)
         return message, 200
     else:
@@ -151,7 +153,7 @@ def remove_course(uid, cid):
         v1 = get_student(uid)
         posts.update({"uid":uid},{"$pull":{"cid_list": cid}})
         message = "Removed course(" + cid + ") from student(" + uid + ")\n"
-        data = json.dumps({"port": port_num, "v1": v1, "v2": get_student(uid), "uid": uid, "cid": cid, "verb": DELETE})
+        payload = json.dumps({"port": port_num, "v1": v1, "v2": get_student(uid), "uid": uid, "cid": cid, "verb": DELETE})
         post_event(uid, data)
         return message, 200
     else:
@@ -164,7 +166,7 @@ def delete_student(uid):
     if record:
         v1 = get_student(uid)
         posts.remove({"uid":uid})
-        data = json.dumps({"port": port_num, "v1": v1, "v2": "", "uid": uid, "cid": "", "verb": DELETE})
+        payload = json.dumps({"port": port_num, "v1": v1, "v2": "", "uid": uid, "cid": "", "verb": DELETE})
         post_event(uid, data)
         return "Student deleted successfully", 200
     else:
@@ -204,6 +206,10 @@ def check_course(uid, cid):
         return record
     else:
         return 0
+
+def form_or_json():
+    data = request.form
+    return data if data is not None else request.data
 
 if __name__ == '__main__':
     app.run(
