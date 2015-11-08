@@ -70,7 +70,7 @@ def main(argv):
 	if (len(set(ports)) < expected_unique_ports):
 		print "Each port number must be distinct (including partitions)."
 		sys.exit(1)
-	app.run()
+	app.run(debug=True)
 
 # Check that the requester's port belongs to courses or one of the students micro-services
 def check_port(port):
@@ -141,14 +141,6 @@ def post_key_POST_OR_DEL(primary_key):
 		return response(data, 400)
 
 	# figure out who the sender was
-	sender = None
-	action = None
-	uid = None 
-	cid = None
-	old_record = None 
-	new_record = None
-	port = None
-	print data
 	for k, v in data.iteritems():
 		if k == 'port':
 			port = int(v)
@@ -191,16 +183,19 @@ def post_key_POST_OR_DEL(primary_key):
 				# student added a class, tell courses MS
 				if (cid in courses_list):
 					print "Students added " + str(uid) + " to class " + str(cid)
-					url = courses + "courses/" + cid + "/students"
+					url = "http://127.0.0.1:" + str(courses_port) + "/courses/" + cid + "/students"
 					print "SENT URL: " + url
-					data = json.dumps({"uid":uid, "forward":"False"})
-					res = requests.post(url, data=data)
+					payload = json.dumps({"uid":uid, "forward":"False"})
+					print "uid" + uid
+					print {"uid":uid, "forward":"False"}
+					print payload
+					res = requests.post(url, data=payload)
 					#print "Notified courses that " + str(uid) + " added class " + str(cid)
 					print "Response from courses: " + res.text
 				else: # that class does not exist, undo student's action
 					print "Student " + str(uid) + " cannot join nonexistent class " + str(cid)
 					for k, v in students.iteritems():
-						url = k + "students/" + uid + "/courses/" + cid
+						url = k + "students/" + uid + "/courses/" + cid #TODO this url doesn't work
 						res = requests.delete(url)
 					print "Class " + str(cid) + " does not exist, remove " + str(uid) + " from class"
 			else:

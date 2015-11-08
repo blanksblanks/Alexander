@@ -46,7 +46,6 @@ def all_courses():
 def get_course(cid):
     record = get_record(cid)
     if record:
-        print "Found matching record for CID: ", cid
         return dumps(record)
     else:
         return not_found()
@@ -57,7 +56,6 @@ def get_course(cid):
 def get_course_students(cid):
     record = get_record(cid)
     if record:
-        print "Found matching record for CID: ", cid
         return dumps(record["uid_list"])
     else:
         return not_found()
@@ -80,11 +78,6 @@ def add_student(cid):
         return message, 200
     else:
         return not_found()
-    #uid_list = posts.find({"cid": cid})
-    #uid_list.append(uid)
-    #print uid_list
-    #print posts.find({"cid": cid})
-
 
 #Remove student from course.
 @app.route('/courses/<cid>/students/<uid>', methods=[DELETE])
@@ -102,9 +95,6 @@ def remove_student(cid, uid):
         return message, 200
     else:
         return not_found()
-    #posts = db.posts
-    #uid_list = posts.find({"cid": cid})
-    #uid_list.append(uid)
 
 #Update course info.
 @app.route('/courses/<cid>', methods=[PUT])
@@ -133,14 +123,12 @@ def add_course():
     if record:
         message = "Course(" + cid + ") already exists\n"
         return message, 409
-    posts.insert({"cid":cid})
+    posts.insert({"cid": cid, "uid_list": []})
     for k,v in data.iteritems():
         if k == "cid":
             continue
         elif k == "uid_list":
-            # Add each course in a comma-delimited string to uid_list
-            for uid in v.split(','):
-                posts.update({"cid":cid},{"$push":{"uid_list": uid}})
+            return "You can't create a course with a pre-existing list of students\n", 409
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
     payload = json.dumps({"port": port_num, "v1" : "", "v2": get_course(cid), "cid": cid, "uid": "", "verb": POST})
@@ -184,8 +172,8 @@ def do_not_forward():
 
 # Returns data whether from request.form or request.data
 def form_or_json():
-    data = request.form
-    return data if data is not None else request.data
+    data = request.data
+    return data if data is not '' else request.form
 
 # Returns a record given a CID (course identifier)
 def get_record(cid):
@@ -202,9 +190,9 @@ def post_event(cid, payload):
     if do_not_forward():
         return
     url = 'http://127.0.0.1:5000/integrator/' + cid
-    print "POST to integrator: " + url
+    print "Posted to integrator: " + url
     res = requests.post(url, data=payload)
-    print 'response from server:', res.text
+    print 'Response from integrator:', res.text
 
 if __name__ == '__main__':
     app.run(debug=True, port=port_num)

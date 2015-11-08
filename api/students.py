@@ -66,7 +66,6 @@ def all_users():
 def get_student(uid):
     record = get_record(uid)
     if record:
-        print "Found matching record for UID: ", uid
         return dumps(record)
     else:
         return not_found()
@@ -76,7 +75,6 @@ def get_student(uid):
 def get_student_courses(uid):
     record = get_record(uid)
     if record:
-        print "Found matching record for UID: ", uid
         return dumps(record["cid_list"])
     else:
         return not_found()
@@ -188,9 +186,9 @@ def post_event(uid, payload):
     if do_not_forward():
         return
     url = 'http://127.0.0.1:5000/integrator/' + uid
-    print "POST to integrator: " + url
+    print "Posted to integrator: " + url
     res = requests.post(url, data=payload)
-    print 'response from server:', res.text
+    print 'Response from integrator:', res.text
 
 # Looks for forward: false tag from integrator requests
 def do_not_forward():
@@ -210,7 +208,7 @@ def check_course(uid, cid):
 # Returns data whether from request.form or request.data
 def form_or_json():
     data = request.form
-    return data if data is not None else request.data
+    return data if data is not '' else request.data
 
 if __name__ == '__main__':
     app.run(
