@@ -64,6 +64,7 @@ def get_course_students(cid):
 @app.route('/courses/<cid>/students', methods=[POST])
 def add_student(cid):
     data = form_or_json()
+    pdb.set_trace()
     uid = data['uid']
     record = get_record(cid)
     if record:
@@ -173,7 +174,7 @@ def do_not_forward():
 # Returns data whether from request.form or request.data
 def form_or_json():
     data = request.data
-    return data if data is not '' else request.form
+    return json.loads(data) if data is not '' else request.form
 
 # Returns a record given a CID (course identifier)
 def get_record(cid):

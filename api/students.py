@@ -186,8 +186,8 @@ def check_course(uid, cid):
 
 # Returns data whether from request.form or request.data
 def form_or_json():
-    data = request.form
-    return data if data is not '' else request.data
+    data = request.data
+    return json.loads(data) if data is not '' else request.form
 
 if __name__ == '__main__':
     app.run(
