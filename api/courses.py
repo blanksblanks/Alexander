@@ -19,7 +19,7 @@ import requests
 # Mongo db stuff
 from pymongo import MongoClient
 client = MongoClient()
-db = client.test_database
+db = client['databaseC']
 course_collection = db.test_collection
 posts = db.posts
 
