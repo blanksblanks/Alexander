@@ -201,6 +201,7 @@ The three students.py microservices are run as follows:
 "python students.py 9004"
 "python students.py 9005"
 
+```
 Test Case 3: Add students to class (from students side)
 dyn-129-236-236-231:api bluemelodia$ curl --data "firstName=Brown&lastName=Bear&uid=lineBrown" http://127.0.0.1:9002/students
 New student(lineBrown) created
