@@ -200,3 +200,15 @@ The three students.py microservices are run as follows:
 "python students.py 9003"
 "python students.py 9004"
 "python students.py 9005"
+
+Test Case 3: Add students to class (from students side)
+dyn-129-236-236-231:api bluemelodia$ curl --data "firstName=Brown&lastName=Bear&uid=lineBrown" http://127.0.0.1:9002/students
+New student(lineBrown) created
+dyn-129-236-236-231:api bluemelodia$ curl --data "cid=COMS4111" http://127.0.0.1:9001/courses
+Course(COMS4111) added
+dyn-129-236-236-231:api bluemelodia$ curl --data "cid=COMS4111" http://127.0.0.1:9002/students/lineBrown/courses
+Added course(COMS4111) to student(lineBrown)
+dyn-129-236-236-231:api bluemelodia$ curl -X GET http://127.0.0.1:9001/courses/COMS4111
+{"_id": {"$oid": "563eb03a06a1a4b112e8a9f0"}, "uid_list": ["lineBrown"], "cid": "COMS4111"}dyn-129-236-236-231:api bluemelodia$
+
+
