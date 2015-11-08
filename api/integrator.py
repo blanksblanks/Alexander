@@ -192,10 +192,11 @@ def post_key_POST_OR_DEL(primary_key):
 				print "Courses added a student: " + uid
 				# courses added student to class, tell student MS
 				for k, v in students.iteritems():
-					url = k + "students/" + uid + "/courses"
-					data = {'cid':cid}
-					res = requests.post(url, json=data)
- 					print url
+					url = "http://127.0.0.1:" + str(int(v)) + "/student/" + uid + "/courses"
+					print url
+					payload = json.dumps({"cid":cid, "forward":"False"})
+					res = requests.post(url, data=payload)
+					print "Reponse from students: " + res.text
 	elif action == 'PUT':
 		print 'PUT'
 	elif action == 'DELETE':
