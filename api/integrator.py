@@ -188,16 +188,8 @@ def post_key_POST_OR_DEL(primary_key):
 					res = requests.post(url, data=payload)
 					#print "Notified courses that " + str(uid) + " added class " + str(cid)
 					print "Response from courses: " + res.text
-				"""else: # that class does not exist, undo student's action
-					print "Student " + str(uid) + " cannot join nonexistent class " + str(cid)
-					for k, v in students.iteritems():
-						url = "http://127.0.0.1:" + str(v) + "/students/" + uid + "/courses/" + cid
-						print url
-						payload = json.dumps({"forward":"False"})
-						res = requests.delete(url, data=payload)
-					print "Class " + str(cid) + " does not exist, remove " + str(uid) + " from class"
-					print "Response from students: " + res.text"""
 			else:
+				print "Courses added a student: " + uid
 				# courses added student to class, tell student MS
 				for k, v in students.iteritems():
 					url = k + "students/" + uid + "/courses"
