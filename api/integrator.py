@@ -201,9 +201,21 @@ def post_key_POST_OR_DEL(primary_key):
 		print 'PUT'
 	elif action == 'DELETE':
 		if sender == 'student': # tell courses we are deleting the student
-			url = "http://127.0.0.1:" + str(courses_port) + "/courses/" + cid + "/students/" + uid
-			payload = json.dumps({"uid":uid, "forward":"False"})
-			res = requests.delete(url, data=payload)
+			if len(cid) > 1:
+				url = "http://127.0.0.1:" + str(courses_port) + "/courses/" + cid + "/students/" + uid
+				payload = json.dumps({"uid":uid, "forward":"False"})
+				res = requests.delete(url, data=payload)
+			else: # remove poppy from all classes
+				print "other deletion"
+				old_dictionary = eval(old_record)
+				cid_list = old_dictionary["cid_list"]
+				for v in cid_list:
+					url = "http://127.0.0.1:" + str(courses_port) + "/courses/" + str(v) + "/students/" + uid
+					payload = json.dumps({"uid":uid, "forward":"False"})
+					res = requests.delete(url, data=payload)
+				#cid_list = old_record["cid_list"] 
+				#/courses/<cid>/students/<uid>
+				#print cid_list
 		else:
 			for k, v in students.iteritems():
 				url = "http://127.0.0.1:" + str(int(v)) + "/students/" + uid + "/courses/" + cid
