@@ -115,7 +115,7 @@ def add_course(uid):
         message = "Added course(" + cid + ") to student(" + uid + ")\n"
         payload = json.dumps({"port": port_num, "v1": v1, "v2": get_student(uid), "uid": uid, "cid": cid, "verb": POST})
         post_event(uid, payload)
-        return message, 200
+        return message, 201
     else:
         return not_found()
 
