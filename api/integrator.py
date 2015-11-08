@@ -201,12 +201,15 @@ def post_key_POST_OR_DEL(primary_key):
 		print 'PUT'
 	elif action == 'DELETE':
 		if sender == 'student': # tell courses we are deleting the student
-			url = courses + cid + "/students/" + uid 
-			#/courses/<cid>/students/<uid>
-			#url = courses + "courses/" + cid
-			print url
-			#res = requests.post()
-		else: # tell each 
+			url = "http://127.0.0.1:" + str(courses_port) + "/courses/" + cid + "/students/" + uid
+			payload = json.dumps({"uid":uid, "forward":"False"})
+			res = requests.delete(url, data=payload)
+		elif sender == 'course':
+			# TODO: Need function to contact router for correct URL/port_num
+			url = "http://127.0.0.1:9002" + "/students/" + uid + "/courses/" + cid
+			payload = json.dumps({"cid":cid, "forward":"False"})
+			res = requests.delete(url, data=payload)
+		else: # tell each
 			for k, v in students.iteritems():
 				print "SEND SEND SEND!"
 
