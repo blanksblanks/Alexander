@@ -217,13 +217,15 @@ def post_key_POST_OR_DEL(primary_key):
             new_list = new_dictionary["uid_list"]
             changes = compare_lists(old_list, new_list)
             for uid in changes['post']:
-                url = "http://127.0.0.1:9001" + "/students/" + uid + "/courses"
-                payload = json.dumps({"cid":cid, "forward":"False"})
-                res = requests.post(url, data=payload)
+                for k, v in students.iteritems():
+                    url = "http://127.0.0.1:" + str(int(v)) + "/students/" + uid + "/courses"
+                    payload = json.dumps({"cid":cid, "forward":"False"})
+                    res = requests.post(url, data=payload)
             for uid in changes['delete']:
-                url = "http://127.0.0.1:9001" + "/students/" + uid + "/courses/" + cid
-                payload = json.dumps({"cid":cid, "forward":"False"})
-                res = requests.delete(url, data=payload)
+                for k, v in students.iteritems():
+                    url = "http://127.0.0.1:" + str(int(v)) + "/students/" + uid + "/courses/" + cid
+                    payload = json.dumps({"cid":cid, "forward":"False"})
+                    res = requests.delete(url, data=payload)
     elif action == 'DELETE':
         if sender == 'student': # tell courses we are deleting the student
             if len(cid) > 1:
