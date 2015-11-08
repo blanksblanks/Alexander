@@ -149,7 +149,7 @@ def remove_course(cid):
         posts.remove({"cid":cid})
         payload = json.dumps({"port": port_num, "v1" : v1, "v2": "", "cid": cid, "uid": "", "verb": DELETE})
         message = "Course(" + cid + ") removed\n"
-        post_event(cid, DELETE)
+        post_event(cid, payload)
         return message, 200
     else:
         return not_found()

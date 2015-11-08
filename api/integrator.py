@@ -213,20 +213,21 @@ def post_key_POST_OR_DEL(primary_key):
 					payload = json.dumps({"uid":uid, "forward":"False"})
 					res = requests.delete(url, data=payload)
 		else:
-			print old_record
-			for k, v in students.iteritems():
-				url = "http://127.0.0.1:" + str(int(v)) + "/students/" + uid + "/courses/" + cid
-				payload = json.dumps({"cid":cid, "forward":"False"})
-				res = requests.delete(url, data=payload)
-
+			if len(new_record) > 1:
+				for k, v in students.iteritems():
+					url = "http://127.0.0.1:" + str(int(v)) + "/students/" + uid + "/courses/" + cid
+					payload = json.dumps({"cid":cid, "forward":"False"})
+					res = requests.delete(url, data=payload)
+			else: # the class is gone
+				for k, v in students.iteritems():
+					old_dictionary = eval(old_record)
+					uid_list = old_dictionary["uid_list"]
+					for w in uid_list:
+						url = "http://127.0.0.1:" + str(int(v)) + "/students/" + str(w) + "/courses/" + cid
+						payload = json.dumps({"cid":cid, "forward":"False"})
+						res = requests.delete(url, data=payload)
 	data = {'received':request.data}
 	return response(data, 200)
-"""
-    url = 'http://127.0.0.1:5000/integrator/' + uid
-    print "POST to integrator: " + url
-    res = requests.post(url, data=payload)
-    print 'response from server:', res.text
-"""
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
