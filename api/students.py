@@ -30,29 +30,8 @@ import pymongo
 from pymongo import MongoClient
 client = MongoClient()
 db = client['databaseS' + str(DBInstance)]
-#db = client.test_database
 collection = db.test_collection
 posts = db.posts
-collection.remove({}) # start clear
-posts.remove() # start clear
-
-# Prepopulate DB when students.py is restarted by stat if on debug mode
-post = {"first_name": "Agustin",
-        "last_name": "Chanfreau",
-        "uid": "ac3680",
-        "email": "ac3680@columbia.edu",
-        "cid_list": ["COMS123", "COMS1234", "COMS12345"],
-        "past_cid_list": ["COMS948", "COMS94", "COMS9841"]
-        }
-post_id = posts.insert_one(post).inserted_id
-
-post = {"first_name": "Mel",
-        "last_name": "Chaasdau",
-        "uid": "ab3680",
-        "email": "ab3680@columbia.edu",
-        "cid_list": ["COMS123", "COMS1234", "COMS12345"],
-        "past_cid_list": ["COMS948", "COMS94", "COMS9841"]}
-post_id = posts.insert_one(post).inserted_id
 
 # GET .../students - returns all information for all students
 @app.route('/students', methods = [GET])

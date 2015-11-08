@@ -75,7 +75,7 @@ def add_student(cid):
         message = "Added student(" + uid + ") to course(" + cid + ")\n"
         payload = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": uid, "verb": POST})
         post_event(cid, payload)
-        return message, 200
+        return message, 201
     else:
         return not_found()
 
@@ -134,7 +134,7 @@ def add_course():
     payload = json.dumps({"port": port_num, "v1" : "", "v2": get_course(cid), "cid": cid, "uid": "", "verb": POST})
     message = "Course(" + cid + ") added\n"
     post_event(cid, payload)
-    return message, 200
+    return message, 201
     #uid_list = posts.find({"cid": cid})
     #uid_list.append(uid)
     #print uid_list

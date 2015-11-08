@@ -24,7 +24,7 @@ app.url_map.converters['regex'] = RegexConverter
 #(Or a list with only a "0" if the uid's first character is not a letter)
 #This is used by all re-routes for Students except POST
 def getPort(param):
-    with open('config.txt', 'rb') as handle:
+    with open('config', 'rb') as handle:
         routingTable = pickle.loads(handle.read())
     UIDisThere = False
     portList = []
@@ -53,7 +53,7 @@ def getPort(param):
 #Returns the target port as single variable - not as list
 #This is only used by the student's POST
 def postPort(param):
-    with open('config.txt', 'rb') as handle:
+    with open('config', 'rb') as handle:
         routingTable = pickle.loads(handle.read())
     UIDisThere = False
     for key, value in routingTable.items():
