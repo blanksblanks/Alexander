@@ -92,8 +92,8 @@ def update_student(uid):
     v1 = get_student(uid)
     for k,v in data.iteritems():
         if k == "cid_list":
-            for cid in v.split(','):
-                posts.update({"uid":uid},{"$push":{"cid_list": cid}})
+            cid_list = v.split(',')
+            posts.update({"uid":uid},{"$set":{"cid_list": cid_list}})
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
     payload = json.dumps({"port": port_num, "v1": v1, "v2": get_student(uid), "uid": uid, "cid": "", "verb": PUT})

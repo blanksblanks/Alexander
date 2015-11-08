@@ -24,7 +24,7 @@ course_collection = db.test_collection
 posts = db.posts
 
 course_collection.remove({}) # start clear
-posts.remove() # start clear
+# posts.remove() # start clear
 
 # Globals
 port_num = int("9001")
@@ -106,8 +106,8 @@ def update_course(cid):
     v1 = get_course(cid)
     for k,v in data.iteritems():
         if k == "uid_list":
-            for uid in v.split(','):
-                posts.update({"cid":cid},{"$push":{"uid_list": uid}})
+            uid_list = v.split(',')
+            posts.update({"cid":cid},{"$set":{"uid_list": uid_list}})
         else:
             posts.update({"cid":cid},{"$set":{k:v}})
     payload = json.dumps({"port": port_num, "v1" : v1, "v2": get_course(cid), "cid": cid, "uid": "", "verb": PUT})
@@ -135,10 +135,6 @@ def add_course():
     message = "Course(" + cid + ") added\n"
     post_event(cid, payload)
     return message, 201
-    #uid_list = posts.find({"cid": cid})
-    #uid_list.append(uid)
-    #print uid_list
-    #print posts.find({"cid": cid})
 
 #Remove course from database.
 @app.route('/courses/<cid>', methods=[DELETE])
