@@ -192,7 +192,7 @@ def post_key_POST_OR_DEL(primary_key):
 				print "Courses added a student: " + uid
 				# courses added student to class, tell student MS
 				for k, v in students.iteritems():
-					url = "http://127.0.0.1:" + str(int(v)) + "/student/" + uid + "/courses"
+					url = "http://127.0.0.1:" + str(int(v)) + "/students/" + uid + "/courses"
 					print url
 					payload = json.dumps({"cid":cid, "forward":"False"})
 					res = requests.post(url, data=payload)
@@ -204,14 +204,11 @@ def post_key_POST_OR_DEL(primary_key):
 			url = "http://127.0.0.1:" + str(courses_port) + "/courses/" + cid + "/students/" + uid
 			payload = json.dumps({"uid":uid, "forward":"False"})
 			res = requests.delete(url, data=payload)
-		elif sender == 'course':
-			# TODO: Need function to contact router for correct URL/port_num
-			url = "http://127.0.0.1:9002" + "/students/" + uid + "/courses/" + cid
-			payload = json.dumps({"cid":cid, "forward":"False"})
-			res = requests.delete(url, data=payload)
-		else: # tell each
+		else:
 			for k, v in students.iteritems():
-				print "SEND SEND SEND!"
+				url = "http://127.0.0.1:" + str(int(v)) + "/students/" + uid + "/courses/" + cid
+				payload = json.dumps({"cid":cid, "forward":"False"})
+				res = requests.delete(url, data=payload)
 
 	data = {'received':request.data}
 	return response(data, 200)
