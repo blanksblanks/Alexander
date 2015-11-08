@@ -106,7 +106,7 @@ def update_course(cid):
     v1 = get_course(cid)
     for k,v in data.iteritems():
         if k == "uid_list":
-            uid_list = v.split(',')
+            uid_list = v.split(',') if v is not '' else []
             posts.update({"cid":cid},{"$set":{"uid_list": uid_list}})
         else:
             posts.update({"cid":cid},{"$set":{k:v}})

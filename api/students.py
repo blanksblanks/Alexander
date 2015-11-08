@@ -92,7 +92,7 @@ def update_student(uid):
     v1 = get_student(uid)
     for k,v in data.iteritems():
         if k == "cid_list":
-            cid_list = v.split(',')
+            cid_list = v.split(',') if v is not '' else []
             posts.update({"uid":uid},{"$set":{"cid_list": cid_list}})
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
