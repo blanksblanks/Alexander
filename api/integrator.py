@@ -9,6 +9,7 @@ import sys
 import datetime
 import pprint
 import thread
+import pdb
 
 from bson.json_util import dumps
 import requests
@@ -30,6 +31,7 @@ courses_port = None
 courses_list = []
 students_list = []
 students = {} # dictionary of studentsURL: studentsPort
+host = "http://127.0.0.1:1234/"
 
 def main(argv):
     if (len(argv) < 5):
@@ -133,7 +135,7 @@ def format_key(key):
 # POST with primary key only (primary keys are cid or uid)
 # The integrator will inform the other MS about these changes
 @app.route('/integrator/<primary_key>', methods = ['POST'])
-def post_key_POST_OR_DEL(primary_key):
+def handle_event(primary_key):
     data = json.loads(request.data) #convert data into dictionary
     requester_port = data["port"]
     if (requester_port is None):
@@ -183,20 +185,18 @@ def post_key_POST_OR_DEL(primary_key):
                 # student added a class, tell courses MS
                 if (cid in courses_list):
                     print "Students added " + str(uid) + " to class " + str(cid)
-                    url = "http://127.0.0.1:" + str(courses_port) + "/courses/" + cid + "/students"
+                    url = host + "/courses/" + cid + "/students"
                     payload = json.dumps({"uid":uid, "forward":"False"})
                     res = requests.post(url, data=payload)
-                    #print "Notified courses that " + str(uid) + " added class " + str(cid)
                     print "Response from courses: " + res.text
             else:
                 print "Courses added a student: " + uid
                 # courses added student to class, tell student MS
-                for k, v in students.iteritems():
-                    url = "http://127.0.0.1:" + str(int(v)) + "/students/" + uid + "/courses"
-                    print url
-                    payload = json.dumps({"cid":cid, "forward":"False"})
-                    res = requests.post(url, data=payload)
-                    print "Reponse from students: " + res.text
+                url = host + "/students/" + uid + "/courses"
+                print url
+                payload = json.dumps({"cid":cid, "forward":"False"})
+                res = requests.post(url, data=payload)
+                print "Reponse from students: " + res.text
     elif action == 'PUT':
         old_dictionary = eval(old_record)
         new_dictionary = eval(new_record)
@@ -205,54 +205,50 @@ def post_key_POST_OR_DEL(primary_key):
             new_list = new_dictionary["cid_list"]
             changes = compare_lists(old_list, new_list)
             for cid in changes['post']:
-                url = "http://127.0.0.1:" + str(courses_port) + "/courses/" + cid + "/students"
+                url = host + "/courses/" + cid + "/students"
                 payload = json.dumps({"uid":uid, "forward":"False"})
                 res = requests.post(url, data=payload)
             for cid in changes['delete']:
-                url = "http://127.0.0.1:" + str(courses_port) + "/courses/" + cid + "/students/" + uid
+                url = host + "/courses/" + cid + "/students/" + uid
                 payload = json.dumps({"uid":uid, "forward":"False"})
                 res = requests.delete(url, data=payload)
-        if sender == 'course':
+        elif sender == 'course':
             old_list = old_dictionary["uid_list"]
             new_list = new_dictionary["uid_list"]
             changes = compare_lists(old_list, new_list)
             for uid in changes['post']:
-                for k, v in students.iteritems():
-                    url = "http://127.0.0.1:" + str(int(v)) + "/students/" + uid + "/courses"
-                    payload = json.dumps({"cid":cid, "forward":"False"})
-                    res = requests.post(url, data=payload)
+                url = host + "/students/" + uid + "/courses"
+                payload = json.dumps({"cid":cid, "forward":"False"})
+                res = requests.post(url, data=payload)
             for uid in changes['delete']:
-                for k, v in students.iteritems():
-                    url = "http://127.0.0.1:" + str(int(v)) + "/students/" + uid + "/courses/" + cid
-                    payload = json.dumps({"cid":cid, "forward":"False"})
-                    res = requests.delete(url, data=payload)
+                url = host + "/students/" + uid + "/courses/" + cid
+                payload = json.dumps({"cid":cid, "forward":"False"})
+                res = requests.delete(url, data=payload)
     elif action == 'DELETE':
         if sender == 'student': # tell courses we are deleting the student
             if len(cid) > 1:
-                url = "http://127.0.0.1:" + str(courses_port) + "/courses/" + cid + "/students/" + uid
+                url = host + "/courses/" + cid + "/students/" + uid
                 payload = json.dumps({"uid":uid, "forward":"False"})
                 res = requests.delete(url, data=payload)
             else: # remove student from all classes
                 old_dictionary = eval(old_record)
                 cid_list = old_dictionary["cid_list"]
                 for v in cid_list:
-                    url = "http://127.0.0.1:" + str(courses_port) + "/courses/" + str(v) + "/students/" + uid
+                    url = host + "/courses/" + str(v) + "/students/" + uid
                     payload = json.dumps({"uid":uid, "forward":"False"})
                     res = requests.delete(url, data=payload)
         else:
             if len(new_record) > 1:
-                for k, v in students.iteritems():
-                    url = "http://127.0.0.1:" + str(int(v)) + "/students/" + uid + "/courses/" + cid
+                url = host + "/students/" + uid + "/courses/" + cid
+                payload = json.dumps({"cid":cid, "forward":"False"})
+                res = requests.delete(url, data=payload)
+            else: # the class is gone
+                old_dictionary = eval(old_record)
+                uid_list = old_dictionary["uid_list"]
+                for w in uid_list:
+                    url = host + "/students/" + str(w) + "/courses/" + cid
                     payload = json.dumps({"cid":cid, "forward":"False"})
                     res = requests.delete(url, data=payload)
-            else: # the class is gone
-                for k, v in students.iteritems():
-                    old_dictionary = eval(old_record)
-                    uid_list = old_dictionary["uid_list"]
-                    for w in uid_list:
-                        url = "http://127.0.0.1:" + str(int(v)) + "/students/" + str(w) + "/courses/" + cid
-                        payload = json.dumps({"cid":cid, "forward":"False"})
-                        res = requests.delete(url, data=payload)
     data = {'received':request.data}
     return response(data, 200)
 
