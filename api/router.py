@@ -79,7 +79,6 @@ def coursesRoute(param):
     #A POST request is incoming
     elif request.method == 'POST':
         for k,v in request.form.iteritems():
-            print k,v
             data.update({k:v})
         req = requests.post("http://127.0.0.1:9001/courses" + param, data=data)
         return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
@@ -87,7 +86,6 @@ def coursesRoute(param):
     #A PUT request is incoming
     elif request.method == 'PUT':
         for k,v in request.form.iteritems():
-            print k,v
             data.update({k:v})
         req = requests.put("http://127.0.0.1:9001/courses" + param, data=data)
         return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
@@ -138,7 +136,6 @@ def studentsRoute(param):
     
         #Populate the data dictionary with the key value pairs coming in from the body
         for k,v in request.form.iteritems():
-            print k,v
             data.update({k:v})
         #Get the single target port by finding what letter the UID starts with
         try:
@@ -154,7 +151,6 @@ def studentsRoute(param):
     #PUT coming in
     elif request.method == 'PUT':
         for k,v in request.form.iteritems():
-            print k,v
             data.update({k:v})
         req = requests.put("http://127.0.0.1:" + str(portList[0]) + "/students" + param, data=data)
         return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])

@@ -195,7 +195,7 @@ This clears all Student databases an puts 9 posts into it (three in each alphabe
 
 8. Run partition.py
 
-3. You can run the program at this point, executing "python router.py", "mongod", "python integrator.py", and "python courses.py".
+9. You can run the program at this point, executing "python router.py", "mongod", "python integrator.py http://localhost:9001 9001 3 students http://localhost:9003 9003 http://localhost:9004 9004 http://localhost:9005 9005", and "python courses.py".
 The three students.py microservices are run as follows:
 "python students.py 9003"
 "python students.py 9004"

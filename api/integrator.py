@@ -26,11 +26,12 @@ app = Flask(__name__)
 #python integrator.py <courseMS_URL> <courseMS_port> <number of student partitions> (for each student partition,
 #        list the following:) <studentMS_URL> <studentMS_port>
 #ex. python integrator.py http://localhost:9001 9001 1 http://localhost:9002 9002
+#ex. python integrator.py http://localhost:9001 9001 3 students http://localhost:9003 9003 http://localhost:9004 9004 http://localhost:9005 9005
 
 courses = None
 courses_port = None
 students = {} # dictionary of studentsURL: studentsPort
-host = "http://127.0.0.1:1234/"
+host = "http://127.0.0.1:1235/"
 ok_put_post_response = [200, 201]
 ok_delete_response = [200, 404]
 ok_delete_from_collection_response = [200, 409]
@@ -184,7 +185,6 @@ def handle_event(primary_key):
                 print "Students added " + str(uid) + " to class " + str(cid)
                 # url = host + "/courses/" + cid + "/students"
                 url = get_url(receiver, cid, sender)
-                print "POST to:" + url
                 payload = json.dumps({"uid":uid, "forward":"False"})
                 res = requests.post(url, data=payload)
                 print "Response from courses: " + res.text
@@ -202,7 +202,7 @@ def handle_event(primary_key):
                 res = requests.post(url, data=payload)
                 print "Reponse from students: " + res.text
                 if res.status_code not in ok_put_post_response:
-                    undo_event(old_record, sender, uid, "post")
+                    undo_event(old_record, sender, cid, "post")
                     return "Unsuccessful change", 409
     elif action == 'PUT':
         old_dictionary = eval(old_record)
@@ -239,7 +239,7 @@ def handle_event(primary_key):
                 payload = json.dumps({"cid":cid, "forward":"False"})
                 res = requests.post(url, data=payload)
                 if res.status_code not in ok_put_post_response:
-                    undo_event(old_record, sender, uid, "put")
+                    undo_event(old_record, sender, cid, "put")
                     return "Unsuccessful change", 409
             for uid in changes['delete']:
                 # url = host + "/students/" + uid + "/courses/" + cid
@@ -248,7 +248,7 @@ def handle_event(primary_key):
                 payload = json.dumps({"cid":cid, "forward":"False"})
                 res = requests.delete(url, data=payload)
                 if res.status_code not in ok_delete_from_collection_response:
-                    undo_event(old_record, sender, uid, "put")
+                    undo_event(old_record, sender, cid, "put")
                     return "Unsuccessful change", 409
     elif action == 'DELETE':
         if sender is 'students': # tell courses we are deleting the student
@@ -289,28 +289,28 @@ def handle_event(primary_key):
 
 def undo_event(old_record, sender, sender_id, action):
     print "Error response. Undoing event."
-    record = {}
-    # Save data fields from the old record
-    for k,v in old_record.iteritems():
-        if is_id(k):
-            continue # Ignore
-        elif is_idlist(k):
-            record[k] = ",".join(v) # Convert list to string
-        else:
-            record[k] = v
-    # No forward:false field so PUT is forwarded to integrator for consistency
+    record = eval(old_record)
+    del record['_id']
+    # Remove immutable properties
+    if sender == 'course':
+        del record['cid']
+        record['uid_list'] = ",".join(record['uid_list'])
+    else:
+        del record['uid']
+        record['cid_list'] = ",".join(record['cid_list'])
+    record["forward"] = "False"
     payload = json.dumps(record)
     url = get_url(sender, sender_id)
     if action == 'DELETE':
         sender_key = 'uid' if sender is 'students' else 'cid'
         post_data = {sender_key:sender_id,"forward":"False"}
         # Create an empty student with uid and update the information
-        print "POST to: " + post_url(url)
+        print "POST to: " + post_url(url) + " data: " + post_data
         res = requests.post(post_url(url), data=post_data)
-        print "PUT to: " + url
+        print "PUT to: " + url + " data: " + payload
         res = requests.put(url, data=payload)
     else:
-        print "PUT to: " + url
+        print "PUT to: " + url + " data: " + payload
         res = requests.put(url, data=payload)
 
 # URL variations:
@@ -323,6 +323,7 @@ def undo_event(old_record, sender, sender_id, action):
 # POST ../courses/cid/students
 # PUT, DELETE ../courses/cid/students/uid
 def get_url(resource, pkey="", collection="", fkey=""):
+    print "host is ", host
     url = host + ('/').join([resource, pkey, collection, fkey])
     url = re.sub(r"(/)\1+/*$|/$", "", url)
     return url

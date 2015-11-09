@@ -23,7 +23,7 @@ db = client['databaseC']
 course_collection = db.test_collection
 posts = db.posts
 
-course_collection.remove({}) # start clear
+#course_collection.remove({}) # start clear
 # posts.remove() # start clear
 
 # Globals
