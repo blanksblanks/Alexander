@@ -122,7 +122,9 @@ def add_course():
         return "No cid provided in new course data\n", 409
     if 'uid_list' in data:
         return "You can't create a course with a pre-existing list of students\n", 409
-    if record:
+    record = get_record(data['cid'])
+    cid = data['cid']
+    if get_record(cid):
         message = "Course(" + cid + ") already exists\n"
         return message, 409
     posts.insert({"cid": cid, "uid_list": []})
