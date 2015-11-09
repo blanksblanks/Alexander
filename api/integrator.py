@@ -10,6 +10,7 @@ import datetime
 import pprint
 import thread
 import pdb
+import re
 
 from bson.json_util import dumps
 import requests
@@ -28,10 +29,11 @@ app = Flask(__name__)
 
 courses = None
 courses_port = None
-courses_list = []
-students_list = []
 students = {} # dictionary of studentsURL: studentsPort
 host = "http://127.0.0.1:1234/"
+ok_put_post_response = [200, 201]
+ok_delete_response = [200, 404]
+ok_delete_from_collection_response = [200, 409]
 
 def main(argv):
     if (len(argv) < 5):
@@ -147,11 +149,13 @@ def handle_event(primary_key):
         if k == 'port':
             port = int(v)
             if (port == int(courses_port)):
-                sender = 'course'
+                sender = 'courses'
+                receiver = 'students'
             else:
                 for k, v in students.iteritems():
                     if port == int(v):
-                        sender = 'student'
+                        sender = 'students'
+                        receiver = 'courses'
         elif k == 'verb':
             action = str(v)
         elif k == 'uid':
@@ -169,94 +173,176 @@ def handle_event(primary_key):
     if action == 'POST':
         if len(old_record) < 1: # record creation, don't need to tell other MS
             print "new record creation"
-            if sender == 'student':
-                global students_list
-                students_list.append(uid)
+            if sender is 'students':
                 print "student added: " + uid
-                print "updated students list: " + str(students_list)
             else:
-                global courses_list # add to the list of existing courses
-                courses_list.append(cid)
                 print "course added: " + cid
-                print "updated courses list: " + str(courses_list)
         else: # record update
             print "record update"
-            if sender == 'student':
+            if sender is 'students':
                 # student added a class, tell courses MS
-                if (cid in courses_list):
-                    print "Students added " + str(uid) + " to class " + str(cid)
-                    url = host + "/courses/" + cid + "/students"
-                    payload = json.dumps({"uid":uid, "forward":"False"})
-                    res = requests.post(url, data=payload)
-                    print "Response from courses: " + res.text
-            else:
+                print "Students added " + str(uid) + " to class " + str(cid)
+                # url = host + "/courses/" + cid + "/students"
+                url = get_url(receiver, cid, sender)
+                print "POST to:" + url
+                payload = json.dumps({"uid":uid, "forward":"False"})
+                res = requests.post(url, data=payload)
+                print "Response from courses: " + res.text
+                if res.status_code not in ok_put_post_response:
+                    undo_event(old_record, sender, uid, "post")
+                    return "Unsuccessful change", 409
+            else: # course
                 print "Courses added a student: " + uid
                 # courses added student to class, tell student MS
-                url = host + "/students/" + uid + "/courses"
-                print url
+                print "Class added " + str(uid) + " to student " + str(cid)
+                # url = host + "/students/" + uid + "/courses"
+                url = get_url(receiver, uid, sender)
+                print "POST to:" + url
                 payload = json.dumps({"cid":cid, "forward":"False"})
                 res = requests.post(url, data=payload)
                 print "Reponse from students: " + res.text
+                if res.status_code not in ok_put_post_response:
+                    undo_event(old_record, sender, uid, "post")
+                    return "Unsuccessful change", 409
     elif action == 'PUT':
         old_dictionary = eval(old_record)
         new_dictionary = eval(new_record)
-        if sender == 'student':
+        if sender is 'students':
             old_list = old_dictionary["cid_list"]
             new_list = new_dictionary["cid_list"]
             changes = compare_lists(old_list, new_list)
             for cid in changes['post']:
-                url = host + "/courses/" + cid + "/students"
+                # url = host + "/courses/" + cid + "/students"
+                url = get_url(receiver, cid, sender)
+                print "POST to:" + url
                 payload = json.dumps({"uid":uid, "forward":"False"})
                 res = requests.post(url, data=payload)
+                if res.status_code not in ok_put_post_response:
+                    undo_event(old_record, sender, uid, "put")
             for cid in changes['delete']:
-                url = host + "/courses/" + cid + "/students/" + uid
+                # url = host + "/courses/" + cid + "/students/" + uid
+                url = get_url(receiver, cid, sender, uid)
+                print "DELETE to:" + url
                 payload = json.dumps({"uid":uid, "forward":"False"})
                 res = requests.delete(url, data=payload)
-        elif sender == 'course':
+                if res.status_code not in ok_delete_from_collection_response:
+                    undo_event(old_record, sender, uid, "put")
+                    return "Unsuccessful change", 409
+        else:
             old_list = old_dictionary["uid_list"]
             new_list = new_dictionary["uid_list"]
             changes = compare_lists(old_list, new_list)
             for uid in changes['post']:
-                url = host + "/students/" + uid + "/courses"
+                # url = host + "/students/" + uid + "/courses"
+                url = get_url(receiver, uid, sender)
+                print "POST to:" + url
                 payload = json.dumps({"cid":cid, "forward":"False"})
                 res = requests.post(url, data=payload)
+                if res.status_code not in ok_put_post_response:
+                    undo_event(old_record, sender, uid, "put")
+                    return "Unsuccessful change", 409
             for uid in changes['delete']:
-                url = host + "/students/" + uid + "/courses/" + cid
+                # url = host + "/students/" + uid + "/courses/" + cid
+                url = get_url(receiver, uid, sender, cid)
+                print "DELETE to:" + url
                 payload = json.dumps({"cid":cid, "forward":"False"})
                 res = requests.delete(url, data=payload)
+                if res.status_code not in ok_delete_from_collection_response:
+                    undo_event(old_record, sender, uid, "put")
+                    return "Unsuccessful change", 409
     elif action == 'DELETE':
-        if sender == 'student': # tell courses we are deleting the student
+        if sender is 'students': # tell courses we are deleting the student
+            # Delete from collection
             if len(cid) > 1:
-                url = host + "/courses/" + cid + "/students/" + uid
+                # url = host + "/courses/" + cid + "/students/" + uid
+                url = get_url(receiver, cid, sender, uid)
+                print "DELETE to:" + url
                 payload = json.dumps({"uid":uid, "forward":"False"})
                 res = requests.delete(url, data=payload)
             else: # remove student from all classes
                 old_dictionary = eval(old_record)
                 cid_list = old_dictionary["cid_list"]
-                for v in cid_list:
-                    url = host + "/courses/" + str(v) + "/students/" + uid
+                for cid in cid_list:
+                    # url = host + "/courses/" + str(cid) + "/students/" + uid
+                    url = get_url(receiver, cid, sender, uid)
+                    print "DELETE to:" + url
                     payload = json.dumps({"uid":uid, "forward":"False"})
                     res = requests.delete(url, data=payload)
         else:
             if len(new_record) > 1:
-                url = host + "/students/" + uid + "/courses/" + cid
+                # url = host + "/students/" + uid + "/courses/" + cid
+                url = get_url(receiver, uid, sender, cid)
+                print "DELETE to:" + url
                 payload = json.dumps({"cid":cid, "forward":"False"})
                 res = requests.delete(url, data=payload)
             else: # the class is gone
                 old_dictionary = eval(old_record)
                 uid_list = old_dictionary["uid_list"]
-                for w in uid_list:
-                    url = host + "/students/" + str(w) + "/courses/" + cid
+                for uid in uid_list:
+                    # url = host + "/students/" + str(uid) + "/courses/" + cid
+                    url = get_url(receiver, uid, sender, cid)
+                    print "DELETE to:" + url
                     payload = json.dumps({"cid":cid, "forward":"False"})
                     res = requests.delete(url, data=payload)
     data = {'received':request.data}
     return response(data, 200)
+
+def undo_event(old_record, sender, sender_id, action):
+    print "Error response. Undoing event."
+    record = {}
+    # Save data fields from the old record
+    for k,v in old_record.iteritems():
+        if is_id(k):
+            continue # Ignore
+        elif is_idlist(k):
+            record[k] = ",".join(v) # Convert list to string
+        else:
+            record[k] = v
+    # No forward:false field so PUT is forwarded to integrator for consistency
+    payload = json.dumps(record)
+    url = get_url(sender, sender_id)
+    if action == 'DELETE':
+        sender_key = 'uid' if sender is 'students' else 'cid'
+        post_data = {sender_key:sender_id,"forward":"False"}
+        # Create an empty student with uid and update the information
+        print "POST to: " + post_url(url)
+        res = requests.post(post_url(url), data=post_data)
+        print "PUT to: " + url
+        res = requests.put(url, data=payload)
+    else:
+        print "PUT to: " + url
+        res = requests.put(url, data=payload)
+
+# URL variations:
+# POST ../students
+# PUT, DELETE ../students/uid
+# POST ../students/uid/courses
+# PUT, DELETE ../students/uid/courses/cid
+# POST ../courses
+# PUT, DELETE ../courses/cid
+# POST ../courses/cid/students
+# PUT, DELETE ../courses/cid/students/uid
+def get_url(resource, pkey="", collection="", fkey=""):
+    url = host + ('/').join([resource, pkey, collection, fkey])
+    url = re.sub(r"(/)\1+/*$|/$", "", url)
+    return url
+
+# Remove identifier from url
+# ../students/nb2406/courses/c6998 -> ../students/nb2406/courses
+def post_url(url):
+    return re.sub(r"/[^/]*$", "", url)
 
 # Helper method to find out what entities to post/delete
 def compare_lists(list1, list2):
     post = filter(lambda i: i not in list1, list2) # new entities
     delete = filter(lambda i: i not in list2, list1) # gone entities
     return {"post":post, "delete":delete}
+
+def is_id(s):
+    return re.match(r".*id", s)
+
+def is_idlist(s):
+    return re.match(r".*id_list", k)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
