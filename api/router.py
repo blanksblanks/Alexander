@@ -140,12 +140,14 @@ def studentsRoute(param):
         for k,v in request.form.iteritems():
             print k,v
             data.update({k:v})
-            
         #Get the single target port by finding what letter the UID starts with
-        singlePort = postPort(request.form['uid'])
+        try:
+            singlePort = postPort(request.form['uid'])
+        except:
+            singlePort = postPort(param[1:])
+
         if singlePort == 0: # The UID did not start with a letter
             return "Invalid UID", 400
-            
         req = requests.post("http://127.0.0.1:" + str(singlePort) + "/students" + param, data=data)
         return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
         
