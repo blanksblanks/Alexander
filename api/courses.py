@@ -118,8 +118,10 @@ def update_course(cid):
 @app.route('/courses', methods=[POST])
 def add_course():
     data = form_or_json()
-    cid = data['cid']
-    record = get_record(cid)
+    if 'cid' not in data:
+        return "No cid provided in new course data\n", 409
+    if 'uid_list' in data:
+        return "You can't create a course with a pre-existing list of students\n", 409
     if record:
         message = "Course(" + cid + ") already exists\n"
         return message, 409
@@ -127,8 +129,6 @@ def add_course():
     for k,v in data.iteritems():
         if k == "cid":
             continue
-        elif k == "uid_list":
-            return "You can't create a course with a pre-existing list of students\n", 409
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
     payload = json.dumps({"port": port_num, "v1" : "", "v2": get_course(cid), "cid": cid, "uid": "", "verb": POST})

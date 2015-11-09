@@ -32,6 +32,7 @@ client = MongoClient()
 db = client['databaseS' + str(DBInstance)]
 collection = db.test_collection
 posts = db.posts
+# posts.remove() # start clear
 
 # GET .../students - returns all information for all students
 @app.route('/students', methods = [GET])
@@ -65,6 +66,8 @@ def create_new_student():
     data = form_or_json()
     if 'uid' not in data:
         return "No uid provided in new student data\n", 409
+    if 'cid_list' in data:
+        return "You can't create a student with a pre-enrolled list of courses\n", 409
     uid = data['uid']
     if get_record(uid):
         return "Resource already exists\n", 409
@@ -72,8 +75,6 @@ def create_new_student():
     for k,v in data.iteritems():
         if k == "uid":
             continue
-        elif k == "cid_list":
-            return "You can't create a student with a pre-enrolled list of courses\n", 409
         else:
             posts.update({"uid":uid},{"$set":{k:v}})
     print posts
