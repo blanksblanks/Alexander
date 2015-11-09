@@ -68,7 +68,7 @@ def create_new_student():
     uid = data['uid']
     if get_record(uid):
         return "Resource already exists\n", 409
-    posts.insert({"uid":uid})
+    posts.insert({"uid": uid, "cid_list": [], "past_cid_list": []})
     for k,v in data.iteritems():
         if k == "uid":
             continue
