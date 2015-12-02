@@ -73,27 +73,31 @@ def coursesRoute(param):
     
     #A GET request is incoming
     if request.method == 'GET':
-            req = requests.get("http://127.0.0.1:9001/courses" + param, stream = True)
-            return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        req = requests.get("http://127.0.0.1:9001/courses" + param, stream = True)
+        resp = Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        return resp, req.status_code
             
     #A POST request is incoming
     elif request.method == 'POST':
         for k,v in request.form.iteritems():
             data.update({k:v})
         req = requests.post("http://127.0.0.1:9001/courses" + param, data=data)
-        return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        resp = Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        return resp, req.status_code
         
     #A PUT request is incoming
     elif request.method == 'PUT':
         for k,v in request.form.iteritems():
             data.update({k:v})
         req = requests.put("http://127.0.0.1:9001/courses" + param, data=data)
-        return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        resp = Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        return resp, req.status_code
         
     #A DELETE request is incoming
     elif request.method == 'DELETE':
         req = requests.delete("http://127.0.0.1:9001/courses" + param, stream = True)
-        return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        resp = Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        return resp, req.status_code
 
         
 #Any URIs coming in with "/students..." are re-routed in this function
@@ -113,7 +117,8 @@ def studentsRoute(param):
         #If there is just one Students MS
         if len(portList) == 1:
             req = requests.get("http://127.0.0.1:" + str(portList[0]) + "/students" + param, stream = True)
-            return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+            resp = Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+            return resp, req.status_code
             
         #If there are three Students MSs, the get must concatenate three responses
         if len(portList) == 3:
@@ -146,19 +151,22 @@ def studentsRoute(param):
         if singlePort == 0: # The UID did not start with a letter
             return "Invalid UID", 400
         req = requests.post("http://127.0.0.1:" + str(singlePort) + "/students" + param, data=data)
-        return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        resp = Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        return resp, req.status_code
         
     #PUT coming in
     elif request.method == 'PUT':
         for k,v in request.form.iteritems():
             data.update({k:v})
         req = requests.put("http://127.0.0.1:" + str(portList[0]) + "/students" + param, data=data)
-        return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        resp = Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        return resp, req.status_code
         
     #DELETE coming in
     elif request.method == 'DELETE':
         req = requests.delete("http://127.0.0.1:" + str(portList[0]) + "/students" + param, stream = True)
-        return Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        resp = Response(stream_with_context(req.iter_content()), content_type = req.headers['content-type'])
+        return resp, req.status_code
 
 if __name__ == '__main__':
     app.run(

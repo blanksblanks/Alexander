@@ -40,7 +40,23 @@ def all_courses():
     l = list(r) # l is a list
     return dumps(l)
 
-
+# GET .../courses - returns all information for all courses
+@app.route('/courses/schema/table', methods = [PUT])
+def change_schema():
+    data = form_or_json()
+    r = posts.find() # r is a cursor
+    l = list(r) # l is a list
+    print l
+    for each in l:
+        cid = each['cid']
+        for k,v in data.iteritems():
+            if k != 'cid':
+                posts.update({"cid":cid},{"$pull":{k:v}})
+                #posts.remove({"cid":cid})
+                posts.update({"cid":cid},{"$push":{k:v}})
+                #posts.update({"cid":cid},{"$set":{k:v}})
+    return "Schema successfully updated"
+    
 # GET .../courses/<cid> - returns all information for specified course
 @app.route('/courses/<cid>', methods = [GET])
 def get_course(cid):
@@ -132,7 +148,7 @@ def add_course():
         if k == "cid":
             continue
         else:
-            posts.update({"uid":uid},{"$set":{k:v}})
+            posts.update({"cid":cid},{"$set":{k:v}})
     payload = json.dumps({"port": port_num, "v1" : "", "v2": get_course(cid), "cid": cid, "uid": "", "verb": POST})
     message = "Course(" + cid + ") added\n"
     post_event(cid, payload)
